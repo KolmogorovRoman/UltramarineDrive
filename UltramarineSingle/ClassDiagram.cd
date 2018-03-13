@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="SolidUnit" Collapsed="true">
+    <Position X="3.25" Y="5.5" Width="1.75" />
+    <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="1.375" />
+        <Point X="5.834" Y="1.375" />
+        <Point X="5.834" Y="5.625" />
+        <Point X="5" Y="5.625" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="PointUnit" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="2.25" Y="1.188" />
+        <Point X="2.5" Y="1.188" />
+        <Point X="2.5" Y="5.625" />
+        <Point X="3.25" Y="5.625" />
+      </Path>
+      <InheritanceModifierLabel ManuallyPlaced="true">
+        <Position X="-0.138" Y="0.089" />
+      </InheritanceModifierLabel>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAgAAQAAAAAABAAAAAAAAgAAAAACAAAQAAAABAgAA=</HashCode>
+      <FileName>Solid.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SolidPhysicUnit" Collapsed="true">
+    <Position X="3.25" Y="4" Width="1.75" />
+    <InheritanceLine Type="SolidUnit" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="3.625" Y="5.5" />
+        <Point X="3.625" Y="4.95" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="PhysicUnit" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="3.625" Y="3.57" />
+        <Point X="3.625" Y="4" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true">
+      <Path>
+        <Point X="6" Y="1.25" />
+        <Point X="5.709" Y="1.25" />
+        <Point X="5.709" Y="4.438" />
+        <Point X="5" Y="4.438" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAgAAAAAAAAQAAAAAAAAAAAAA=</HashCode>
+      <FileName>SolidPhysic.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PhysicUnit" Collapsed="true">
+    <Position X="3.25" Y="2.75" Width="1.75" />
+    <InheritanceLine Type="PointUnit" FixedFromPoint="true">
+      <Path>
+        <Point X="2.25" Y="1.062" />
+        <Point X="2.625" Y="1.062" />
+        <Point X="2.625" Y="3.16" />
+        <Point X="3.25" Y="3.16" />
+      </Path>
+      <InheritanceModifierLabel ManuallyPlaced="true" ManuallySized="true">
+        <Position X="0.115" Y="0.079" Height="0.182" Width="0.812" />
+      </InheritanceModifierLabel>
+    </InheritanceLine>
+    <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="1.125" />
+        <Point X="5.563" Y="1.125" />
+        <Point X="5.563" Y="3.5" />
+        <Point X="5" Y="3.5" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAABAoAAAAAAAAABAAACAIABAAAAEAAAAAAAAACIIAA=</HashCode>
+      <FileName>Physic.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GraphicUnit" Collapsed="true">
+    <Position X="3.25" Y="1.75" Width="1.75" />
+    <InheritanceLine Type="PointUnit" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="2.25" Y="0.938" />
+        <Point X="2.729" Y="0.938" />
+        <Point X="2.729" Y="2.438" />
+        <Point X="3.25" Y="2.438" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="1" />
+        <Point X="5.458" Y="1" />
+        <Point X="5.458" Y="2.438" />
+        <Point X="5" Y="2.438" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAAAAAgAAAAgAAABAEAAAAAAAAAAAAQAAAAA=</HashCode>
+      <FileName>Graphic.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PointUnit" Collapsed="true">
+    <Position X="0.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAAAAAAAAABACAAAAAAAABgAABAAAA=</HashCode>
+      <FileName>Misc.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ManagedUnit&lt;T&gt;" Collapsed="true">
+    <Position X="6" Y="0.75" Width="1.5" />
+    <InheritanceLine Type="BaseUnit" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6.688" Y="2" />
+        <Point X="6.688" Y="1.441" />
+      </Path>
+      <InheritanceModifierLabel ManuallyPlaced="true">
+        <Position X="-0.848" Y="0.154" />
+      </InheritanceModifierLabel>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AgBAAAAAAAAAAQAAAEAAAAQAAAAAAEAAAAAGAAAAAAA=</HashCode>
+      <FileName>Management.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BaseUnit" Collapsed="true">
+    <Position X="6" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAARAAQQAAAAAAAAQAAAEAAEAgAAACAAAIACA=</HashCode>
+      <FileName>Management.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="AnimatedGraphicUnit" Collapsed="true">
+    <Position X="3.25" Y="0.75" Width="1.75" />
+    <InheritanceLine Type="PointUnit" FixedFromPoint="true">
+      <Path>
+        <Point X="2.25" Y="0.812" />
+        <Point X="3.25" Y="0.812" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="0.875" />
+        <Point X="5" Y="0.875" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>ACIEAAAAAAAAAwAAAAAAAAAAAAAAABAAAAAAgQIAAAA=</HashCode>
+      <FileName>Graphic.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

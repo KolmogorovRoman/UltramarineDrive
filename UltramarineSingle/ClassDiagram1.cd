@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="Bot" Collapsed="true">
+    <Position X="3.5" Y="1.5" Width="1.5" />
+    <InheritanceLine Type="Player">
+      <InheritanceModifierLabel ManuallyPlaced="true" ManuallySized="true">
+        <Position X="-0.208" Y="0.048" Height="0.182" Width="0.656" />
+      </InheritanceModifierLabel>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAQACAAAAAAAACIAQIYAAgACAAIEAAAAAACAAgAAIAA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Player" Collapsed="true">
+    <Position X="3.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAAEAAAADAAAAEIEAAABAAQBAAAA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Map" Collapsed="true">
+    <Position X="3.5" Y="4" Width="1.5" />
+    <InheritanceLine Type="GraphicUnit" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="2.5" Y="0.75" />
+        <Point X="2.911" Y="0.75" />
+        <Point X="2.911" Y="4.5" />
+        <Point X="3.5" Y="4.5" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="SolidUnit" FixedToPoint="true">
+      <Path>
+        <Point X="6.75" Y="2.82" />
+        <Point X="6.75" Y="4.438" />
+        <Point X="5.873" Y="4.438" Type="JumpStart" />
+        <Point X="5.707" Y="4.438" Type="JumpEnd" />
+        <Point X="5" Y="4.438" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>IAQAAAAAABAAACAAAIAAAAAAAAAAAAAAAAAAAAAAIEA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Plane" Collapsed="true">
+    <Position X="3.5" Y="5.25" Width="1.5" />
+    <InheritanceLine Type="GraphicUnit" ManuallyRouted="true" FixedFromPoint="true">
+      <Path>
+        <Point X="2.5" Y="0.875" />
+        <Point X="2.863" Y="0.875" />
+        <Point X="2.863" Y="5.725" />
+        <Point X="3.5" Y="5.725" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAIAAAABAQA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Tank" Collapsed="true">
+    <Position X="3.5" Y="6.5" Width="1.5" />
+    <InheritanceLine Type="GraphicUnit" ManuallyRouted="true" FixedFromPoint="true">
+      <Path>
+        <Point X="2.5" Y="1" />
+        <Point X="2.725" Y="1" />
+        <Point X="2.725" Y="7.04" />
+        <Point X="3.5" Y="7.04" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="SolidPhysicUnit" ManuallyRouted="true" FixedFromPoint="true">
+      <Path>
+        <Point X="6" Y="0.812" />
+        <Point X="5.79" Y="0.812" />
+        <Point X="5.79" Y="7.04" />
+        <Point X="5" Y="7.04" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AiAAAAAAEAAAAABICICQBggAAAAAAAUBQEBAAAACAAQ=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GraphicUnit" Collapsed="true">
+    <Position X="1" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ACAAAAAAAAAAAgAAAAgAAABAEAAAAAAAAAAAAQAAAAA=</HashCode>
+      <FileName>Graphic.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SolidPhysicUnit" Collapsed="true">
+    <Position X="6" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAgAAAAAAAAQAAAAAAAAAAAAA=</HashCode>
+      <FileName>SolidPhysic.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SolidUnit" Collapsed="true">
+    <Position X="6" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAgAAQAAAAAABAAAAAAAAgAAAAACAAAQAAAABAgAA=</HashCode>
+      <FileName>Solid.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Box" Collapsed="true">
+    <Position X="3.5" Y="2.75" Width="1.5" />
+    <InheritanceLine Type="GraphicUnit" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="2.5" Y="0.688" />
+        <Point X="2.946" Y="0.688" />
+        <Point X="2.946" Y="3.25" />
+        <Point X="3.5" Y="3.25" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="SolidPhysicUnit" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6" Y="0.75" />
+        <Point X="5.675" Y="0.75" />
+        <Point X="5.675" Y="3.25" />
+        <Point X="5" Y="3.25" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Explosive" Collapsed="true">
+    <Position X="3.5" Y="7.75" Width="1.5" />
+    <InheritanceLine Type="SolidUnit" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6.812" Y="2.82" />
+        <Point X="6.812" Y="8.25" />
+        <Point X="5" Y="8.25" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAgAAAAgAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Bullet" Collapsed="true">
+    <Position X="3.5" Y="9" Width="1.5" />
+    <InheritanceLine Type="SolidUnit" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="6.875" Y="2.82" />
+        <Point X="6.875" Y="9.5" />
+        <Point X="5" Y="9.5" />
+      </Path>
+    </InheritanceLine>
+    <InheritanceLine Type="GraphicUnit" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="2.5" Y="1.125" />
+        <Point X="2.636" Y="1.125" />
+        <Point X="2.636" Y="9.562" />
+        <Point X="3.5" Y="9.562" />
+      </Path>
+    </InheritanceLine>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAABAAAAAAggAAAAAAAAEAAAAAAAQAAA=</HashCode>
+      <FileName>Game.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

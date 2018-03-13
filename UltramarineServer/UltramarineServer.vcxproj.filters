@@ -1,0 +1,227 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Файлы исходного кода">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{bd87de2f-6aa2-4fa5-adb1-9059ddb7c514}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp">
+      <UniqueIdentifier>{8484a411-37de-4e65-b8f2-b7f085cce27d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Bullet">
+      <UniqueIdentifier>{8186abf2-478a-45b4-98f4-3a1b3b613ab3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Explosive">
+      <UniqueIdentifier>{ff2d161e-6ef6-445c-9c76-5eeab5e5c5d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Fire">
+      <UniqueIdentifier>{ad3a0c06-3acd-4e2e-a4cc-a5bf66b02eb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Heal">
+      <UniqueIdentifier>{77f92b22-1950-45ce-a7b0-1b28939ad065}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Hit">
+      <UniqueIdentifier>{846b0922-8b53-4dee-a04f-bcddcbc1ec62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Map1">
+      <UniqueIdentifier>{77fd1a77-1f91-4bf8-ab83-67b5df47143b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Plane">
+      <UniqueIdentifier>{fa2fe10f-1a80-4651-b564-fb806ed4fe8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Tank">
+      <UniqueIdentifier>{5681de4f-72e3-49a1-a727-c3ea1ec2ad56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Tank\Body">
+      <UniqueIdentifier>{62a3a537-02f7-4563-a666-c88fa7255e67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\bmp\Tank\Tower">
+      <UniqueIdentifier>{128f3f6b-4322-43e5-b010-00e65f3258ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Заголовочные файлы">
+      <UniqueIdentifier>{a0be37c5-ed38-421a-808a-2b9bcf6dd33e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Net.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="Serialization.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Management.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Misc.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Graphic.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Physic.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Solid.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\SolidPhysic.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="Drive.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="GameServer.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\UltramarineSingle\resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Graphic.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Management.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Misc.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Physic.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Solid.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\SolidPhysic.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="GameNet.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="GameServer.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="Net.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="Drive.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="Serialization.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\IDManagement.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\UltramarineSingle\UltramarineSingle.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\UltramarineSingle\Bitmaps\Font\Font.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Logo.ico">
+      <Filter>Resource Files\bmp</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Bullet\Bullet.bmp">
+      <Filter>Resource Files\bmp\Bullet</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Bullet\Bullet_Mask.bmp">
+      <Filter>Resource Files\bmp\Bullet</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Explosive\Explosive.bmp">
+      <Filter>Resource Files\bmp\Explosive</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Explosive\Explosive_Coll_Mask.bmp">
+      <Filter>Resource Files\bmp\Explosive</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Explosive\Explosive_Draw_Mask.bmp">
+      <Filter>Resource Files\bmp\Explosive</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire1.bmp">
+      <Filter>Resource Files\bmp\Fire</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire1_Mask.bmp">
+      <Filter>Resource Files\bmp\Fire</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire2.bmp">
+      <Filter>Resource Files\bmp\Fire</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire2_Mask.bmp">
+      <Filter>Resource Files\bmp\Fire</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire3.bmp">
+      <Filter>Resource Files\bmp\Fire</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire3_Mask.bmp">
+      <Filter>Resource Files\bmp\Fire</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Heal\Heal.bmp">
+      <Filter>Resource Files\bmp\Heal</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Heal\Heal_Mask.bmp">
+      <Filter>Resource Files\bmp\Heal</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Hit\Hit.bmp">
+      <Filter>Resource Files\bmp\Hit</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Hit\Hit_Mask.bmp">
+      <Filter>Resource Files\bmp\Hit</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Map1\Map1.bmp">
+      <Filter>Resource Files\bmp\Map1</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Map1\Map1_Coll_Mask.bmp">
+      <Filter>Resource Files\bmp\Map1</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Map1\Map1_Draw_Mask.bmp">
+      <Filter>Resource Files\bmp\Map1</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Plane\Plane.bmp">
+      <Filter>Resource Files\bmp\Plane</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Plane\Plane_Mask.bmp">
+      <Filter>Resource Files\bmp\Plane</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Body\TankBody.bmp">
+      <Filter>Resource Files\bmp\Tank\Body</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Body\TankBody_Mask.bmp">
+      <Filter>Resource Files\bmp\Tank\Body</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\RoundTower.bmp">
+      <Filter>Resource Files\bmp\Tank\Tower</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\RoundTower_Mask.bmp">
+      <Filter>Resource Files\bmp\Tank\Tower</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\TankTower.bmp">
+      <Filter>Resource Files\bmp\Tank\Tower</Filter>
+    </Image>
+    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\TankTower_Mask.bmp">
+      <Filter>Resource Files\bmp\Tank\Tower</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\UltramarineSingle\Map1_AIPoints.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
