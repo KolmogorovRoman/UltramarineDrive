@@ -18,7 +18,7 @@
         <Point X="3.25" Y="5.625" />
       </Path>
       <InheritanceModifierLabel ManuallyPlaced="true">
-        <Position X="-0.138" Y="0.089" />
+        <Position X="0.039" Y="-0.244" />
       </InheritanceModifierLabel>
     </InheritanceLine>
     <TypeIdentifier>
@@ -63,7 +63,7 @@
         <Point X="3.25" Y="3.16" />
       </Path>
       <InheritanceModifierLabel ManuallyPlaced="true" ManuallySized="true">
-        <Position X="0.115" Y="0.079" Height="0.182" Width="0.812" />
+        <Position X="0.042" Y="-0.244" Height="0.182" Width="0.812" />
       </InheritanceModifierLabel>
     </InheritanceLine>
     <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
@@ -88,6 +88,9 @@
         <Point X="2.729" Y="2.438" />
         <Point X="3.25" Y="2.438" />
       </Path>
+      <InheritanceModifierLabel ManuallyPlaced="true">
+        <Position X="0.006" Y="-0.294" />
+      </InheritanceModifierLabel>
     </InheritanceLine>
     <InheritanceLine Type="ManagedUnit&lt;T&gt;" ManuallyRouted="true" FixedFromPoint="true" FixedToPoint="true">
       <Path>
@@ -121,14 +124,14 @@
       </InheritanceModifierLabel>
     </InheritanceLine>
     <TypeIdentifier>
-      <HashCode>AgBAAAAAAAAAAQAAAEAAAAQAAAAAAEAAAAAGAAAAAAA=</HashCode>
+      <HashCode>AABAACAAAAAAAAAAAEAAAAAAAAAAAAAAAAAEAAAAAAI=</HashCode>
       <FileName>Management.h</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="BaseUnit" Collapsed="true">
     <Position X="6" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AgAAAAAAARAAQQAAAAAAAAQAAAEAAEAgAAACAAAIACA=</HashCode>
+      <HashCode>AAAAACAAARAAwAAAAAAAAAAAAAEAAAAgAAAAAAAIACI=</HashCode>
       <FileName>Management.h</FileName>
     </TypeIdentifier>
   </Class>

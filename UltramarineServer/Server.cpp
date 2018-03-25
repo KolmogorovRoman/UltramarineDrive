@@ -39,7 +39,6 @@ Server::StoredMessage::StoredMessage(MessageHeader Header, BytesArray* FullMessa
 {}
 Server::StoredMessage::~StoredMessage()
 {
-	ThisInlist->Remove();
 	if (FullMessage != NULL) delete FullMessage;
 }
 Server::StoredMessage* Server::NewStoredMessage(MessageHeader Header, BytesArray* FullMessage, sockaddr_in ClientAddr)
@@ -52,18 +51,23 @@ void Server::SendNecProc(MessageHeader Header, BytesArray* Message, sockaddr_in 
 {
 	StoredMessage* NewMessage = NewStoredMessage(Header, Message, ClientAddr);
 	MessagesManager.Place(Header.Number, NewMessage);
-	NewMessage->ThisInlist = MessagesList.Add(NewMessage);
+	MessagesList.push_back(NewMessage);
+	NewMessage->ThisInlist = std::prev(MessagesList.end());
 }
 void Server::ConfirmRecvProc(MessageInfo* Message)
 {
 	StoredMessage* StoredMessage = MessagesManager.Free(Message->Header.Number);
-	if (StoredMessage != NULL) delete StoredMessage;
+	if (StoredMessage != NULL)
+	{
+		MessagesList.erase(StoredMessage->ThisInlist);
+		delete StoredMessage;
+	}
 }
 void Server::NecResendProc(Server* This)
 {
 	while (true)
 	{
-		ForList(This->MessagesList, Message)
+		for (auto Message : This->MessagesList)
 		{
 			if (Message->TimeToReSend <= 0)
 			{

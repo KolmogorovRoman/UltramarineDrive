@@ -49,13 +49,7 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		PostSteepProc();
 		BaseUnit::DeleteAllThatNeedDelete();
 		if (Closed) break;
-		Sync1->Sync(17);
-		//Sleep(10
-		static LARGE_INTEGER CurrTime, PrevTime, Frequency;
-		/*QueryPerformanceCounter(&CurrTime);
-		QueryPerformanceFrequency(&Frequency);
-		Sleep(max(0, 17 - (CurrTime.QuadPart - PrevTime.QuadPart)*1000/Frequency.QuadPart));
-		QueryPerformanceCounter(&PrevTime);*/
+		Sync1->Sync(17ms);
 	}
 	delete Client;
 	return 0;

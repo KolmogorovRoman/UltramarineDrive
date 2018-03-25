@@ -22,11 +22,15 @@ void Control()
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow)
 {
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONIN$", "r", stdin);
 	InitGraphic(hinst, nCmdShow, L"Single");
 	Sync1 = new Syncronizer();
 	GameInit();
 	while (true)
 	{
+		auto Time = std::chrono::high_resolution_clock::now();
 		BaseUnit::ActivateAll();
 		Control();
 		BeginDraw();
@@ -42,13 +46,10 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		EndDraw();
 		BaseUnit::DeleteAllThatNeedDelete();
 		if (Closed) return 0;
-		Sync1->Sync(17);
-		//Sleep(10
-		static LARGE_INTEGER CurrTime, PrevTime, Frequency;
-		/*QueryPerformanceCounter(&CurrTime);
-		QueryPerformanceFrequency(&Frequency);
-		Sleep(max(0, 17 - (CurrTime.QuadPart - PrevTime.QuadPart)*1000/Frequency.QuadPart));
-		QueryPerformanceCounter(&PrevTime);*/
+		bool OutTime = Contr1.Keys[VK_TAB];
+		if (OutTime) cout << (std::chrono::high_resolution_clock::now() - Time).count() / 1'000'000.0 << ' ';
+		Sync1->Sync(17ms);
+		if (OutTime) cout << (std::chrono::high_resolution_clock::now() - Time).count() / 1'000'000.0 << std::endl;
 	}
 	return 0;
 }

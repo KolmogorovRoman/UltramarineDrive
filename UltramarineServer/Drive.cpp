@@ -41,18 +41,11 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		CallEach(GraphicUnit) Draw();
 		CallEach(AnimatedGraphicUnit) DrawProc();
 		CallEach(AnimatedGraphicUnit) Draw();
-		//CallEach(SendUnit<BaseUnit>) Send();
 		Draw();
 		EndDraw();
 		BaseUnit::DeleteAllThatNeedDelete();
 		if (Closed) return 0;
-		Sync1->Sync(17);
-		//Sleep(10
-		static LARGE_INTEGER CurrTime, PrevTime, Frequency;
-		/*QueryPerformanceCounter(&CurrTime);
-		QueryPerformanceFrequency(&Frequency);
-		Sleep(max(0, 17 - (CurrTime.QuadPart - PrevTime.QuadPart)*1000/Frequency.QuadPart));
-		QueryPerformanceCounter(&PrevTime);*/
+		Sync1->Sync(17ms);
 	}
 	return 0;
 }

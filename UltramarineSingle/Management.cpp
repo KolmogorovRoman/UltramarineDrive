@@ -1,21 +1,10 @@
 #include "Management.h"
 
-BaseUnit* BaseUnit::First;
-BaseUnit* BaseUnit::Last = StaticConstructor();
-IDManager<BaseUnit, 65536, 65536> BaseUnit::Manager;
-BaseUnit* BaseUnit::StaticConstructor()
-{
-	First = (BaseUnit*) malloc(sizeof BaseUnit);
-	Last = (BaseUnit*) malloc(sizeof BaseUnit);
-	First->Next = Last;
-	First->Prev = NULL;
-	Last->Prev = First;
-	Last->Next = NULL;
-	return Last;
-}
+std::list<BaseUnit*> BaseUnit::List;
+
 void BaseUnit::ActivateAll()
 {
-	for (BaseUnit* Current = First->Next; Current != Last; Current = Current->Next)
+	for (BaseUnit* Current : List)
 	{
 		Current->Active = true;
 	}
@@ -24,12 +13,8 @@ BaseUnit::BaseUnit()
 {
 	NeedDelete = false;
 	Active = false;
-	Next = Last;
-	Prev = Last->Prev;
-	Prev->Next = this;
-	Last->Prev = this;
-
-	ID = Manager.Alloc(this);
+	List.push_back(this);
+	Iterator = std::prev(List.end());
 }
 void BaseUnit::Delete()
 {
@@ -37,37 +22,38 @@ void BaseUnit::Delete()
 }
 void BaseUnit::DeleteAllThatNeedDelete()
 {
-	BaseUnit* CurrentNext;
-	for (BaseUnit* Current = First->Next; Current != Last; Current = CurrentNext)
+	for (auto i = List.begin(); i != List.end();)
 	{
-		CurrentNext = Current->Next;
-		if (Current->NeedDelete)
-			delete Current;
+		if ((*i)->NeedDelete)
+		{
+			auto curr = i;
+			++i;
+			delete *curr;
+		}
+		else ++i;
 	}
 }
 BaseUnit::~BaseUnit()
 {
-	Prev->Next = Next;
-	Next->Prev = Prev;
-
-	Manager.Free(ID);
-}
-
-BaseUnit* UnitID(UINT ID)
-{
-	return BaseUnit::Manager.Get(ID);
+	List.erase(Iterator);
 }
 
 //DefineFuncForEach(SteepProcedUnit, SteepProc)
 
 Syncronizer::Syncronizer()
 {
-	Time = clock();
+	Time = std::chrono::high_resolution_clock::now();
 }
-void Syncronizer::Sync(int TimeInterval)
+void Syncronizer::Sync(std::chrono::nanoseconds TimeInterval)
 {
-	SleepTime = max(0, TimeInterval - (clock() - Time));
-	//std::cout << SleepTime<<std::endl;
-	Sleep(SleepTime);
-	Time = clock();
+	using namespace std::chrono_literals;
+	auto EndTime = Time + TimeInterval;
+	while (std::chrono::high_resolution_clock::now() < EndTime)
+	{
+		//std::this_thread::sleep_for(100us);
+		volatile int t = 42;
+		for (int i = 0; i < 10000; i++)
+			sin(t);
+	}
+	Time = std::chrono::high_resolution_clock::now();
 }

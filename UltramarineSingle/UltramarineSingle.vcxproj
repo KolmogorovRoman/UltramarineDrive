@@ -157,10 +157,8 @@
     <ClInclude Include="IDManagement.h" />
     <ClInclude Include="Management.h" />
     <ClInclude Include="Misc.h" />
-    <ClInclude Include="Net.h" />
     <ClInclude Include="Physic.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Server.h" />
     <ClInclude Include="Single.h" />
     <ClInclude Include="Solid.h" />
     <ClInclude Include="SolidPhysic.h" />
@@ -172,14 +170,9 @@
     <ClCompile Include="IDManagement.cpp" />
     <ClCompile Include="Management.cpp" />
     <ClCompile Include="Misc.cpp" />
-    <ClCompile Include="Net.cpp" />
     <ClCompile Include="Physic.cpp" />
-    <ClCompile Include="Server.cpp" />
     <ClCompile Include="Solid.cpp" />
     <ClCompile Include="SolidPhysic.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="UltramarineSingle.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Bitmaps\Bullet\Bullet.bmp" />
@@ -217,6 +210,9 @@
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="UltramarineSingle.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

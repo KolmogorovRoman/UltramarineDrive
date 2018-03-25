@@ -12,7 +12,7 @@ public:
 		MessageHeader Header;
 		BytesArray* FullMessage;
 		WORD TimeToReSend;
-		ListData<StoredMessage>* ThisInlist;
+		std::list<StoredMessage*>::iterator ThisInlist;
 		StoredMessage(MessageHeader Header, BytesArray* FullMessage);
 		~StoredMessage();
 	};
@@ -30,7 +30,7 @@ public:
 	RecvProc* LastRecvProc = NULL;
 
 	IDManager<StoredMessage, 65536, 65536> MessagesManager;
-	List<StoredMessage> MessagesList;
+	std::list<StoredMessage*> MessagesList;
 	StoredMessage* NewStoredMessage(MessageHeader Header, BytesArray* FullMessage);
 	void SendNecProc(MessageHeader Header, BytesArray* Message, sockaddr_in ClientAddr);
 	void ConfirmRecvProc(MessageInfo* Message);

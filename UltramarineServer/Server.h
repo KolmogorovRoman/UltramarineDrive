@@ -22,7 +22,7 @@ public:
 		BytesArray* FullMessage;
 		WORD TimeToReSend;
 		sockaddr_in ClientAddr;
-		ListData<StoredMessage>* ThisInlist;
+		std::list<StoredMessage*>::iterator ThisInlist;
 		StoredMessage(MessageHeader Header, BytesArray* FullMessage, sockaddr_in ClientAddr);
 		~StoredMessage();
 	};
@@ -63,7 +63,7 @@ public:
 	void JoinRecv();
 	sockaddr_in GetSelfAddr(char* StunIP, USHORT StunPort);
 	IDManager<StoredMessage, 65536, 65536> MessagesManager;
-	List<StoredMessage> MessagesList;
+	std::list<StoredMessage*> MessagesList;
 	StoredMessage* NewStoredMessage(MessageHeader Header, BytesArray* FullMessage, sockaddr_in ClientAddr);
 	Client* Clients[16];
 	int ClientsCount = 0;

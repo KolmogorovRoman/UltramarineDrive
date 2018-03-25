@@ -8,7 +8,7 @@ Text* TextStd;
 mutex Mutex;
 CRITICAL_SECTION cs;
 condition_variable Cond;
-List<Exemplar> PrimitiveList[100];
+std::list<Exemplar*> PrimitiveList[100];
 
 HINSTANCE ghInst;
 int gnCmdShow;
@@ -17,11 +17,11 @@ bool Closed = false;
 
 void DrawLine(int x1, int y1, int x2, int y2, int z, double R, double G, double B, double A)
 {
-	PrimitiveList[z].Add(new LineExemplar(x1, y1, x2, y2, z, R, G, B, A));
+	PrimitiveList[z].push_back(new LineExemplar(x1, y1, x2, y2, z, R, G, B, A));
 }
 void DrawRect(int x1, int y1, int x2, int y2, bool Filled, int z, double R, double G, double B, double A)
 {
-	PrimitiveList[z].Add(new RectExemplar(x1, y1, x2, y2, Filled, z, R, G, B, A));
+	PrimitiveList[z].push_back(new RectExemplar(x1, y1, x2, y2, Filled, z, R, G, B, A));
 }
 
 LineExemplar::LineExemplar(double x1, double y1, double x2, double y2, int z, double R, double G, double B, double A)
@@ -168,7 +168,7 @@ Image::Image(LPCTSTR Name, LPCTSTR Maskname, int ACenterx, int ACentery)
 }
 void Image::Draw(double x, double y, int z, double angle, double wScale, double hScale, bool OverScreen)
 {
-	PrimitiveList[z].Add(new ImageExemplar(this, x, y, z, angle, wScale, hScale, OverScreen));
+	PrimitiveList[z].push_back(new ImageExemplar(this, x, y, z, angle, wScale, hScale, OverScreen));
 }
 Image::~Image()
 {
@@ -291,7 +291,7 @@ void Text::DrawSymbol(UCHAR Symb, int x, int y, int z, bool Center)
 }
 void Text::Draw(LPSTR String, int x, int y, int z, bool Center)
 {
-	PrimitiveList[z].Add(new TextExemplar(this, String, x, y, z, Center));
+	PrimitiveList[z].push_back(new TextExemplar(this, String, x, y, z, Center));
 }
 
 GraphicUnit::GraphicUnit(Image* Aimage, int DefaultZ)
@@ -358,7 +358,7 @@ void BeginDraw()
 	EnterCriticalSection(&cs);
 	for (int i = 0; i < 100; i++)
 	{
-		PrimitiveList[i].Clear();
+		PrimitiveList[i].clear();
 	}
 	wglMakeCurrent(hdc, hRC);
 }
@@ -491,12 +491,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		EnterCriticalSection(&cs);
 		wglMakeCurrent(hdc, hRC);
-		bool b = false;
 		for (int i = 99; i >= 0; i--)
 		{
-			if (PrimitiveList[i].First->Next != PrimitiveList[i].Last)
-				b = true;
-			ForList(PrimitiveList[i], Primitive)
+			for (auto Primitive : PrimitiveList[i])
 			{
 				Primitive->Draw();
 			}
