@@ -2,10 +2,10 @@
 class Tank;
 class Map;
 class Bullet;
-//class Bot;
 class Hit;
 class Box;
-//class Player;
+class Player;
+class Bot;
 class Plane;
 class Explosive;
 class TankController;
@@ -17,6 +17,7 @@ using namespace std;
 extern Controller Contr1;
 extern HINSTANCE hInst;
 extern RECT RectInScreen;
+extern Console* GameConsole;
 
 void GameInit();
 void DeleteClient(Server::Client* Client);
@@ -26,51 +27,57 @@ class Bullet:
 	public SolidUnit,
 	public GraphicUnit,
 	public SteepProcedUnit,
-	public SendUnit<Bullet>
+	public SendUnit<Bullet>,
+	Serialazable
 {
 public:
 	Player* ParPlayer;
 	Bullet(double x, double y, double angle, Player* ParPlayer);
 	void SteepProc();
 	void CollProc(SolidUnit* Other);
+	void Serialize();
 	~Bullet();
 };
-void Serialize(Bullet& Bullet);
 class Tank:
 	public ManagedUnit<Tank>,
 	public GraphicUnit,
 	public SolidPhysicUnit,
 	public SteepProcedUnit,
-	public SendUnit<Tank>
+	public SendUnit<Tank>,
+	Serialazable
 {
 public:
-	TankController* Controller;
+	TankController* Contr;
 	GraphicUnit* Tower;
 	Player* player;
 	int UserID;
-	int HitPoints;
-	int FireReady;
-	LPSTR NickName;
+	BYTE HitPoints;
+	BYTE FireReady;
+	string NickName;
 	int NickLen;
 	double TowerAngle;
-	Tank(double x, double y, double angle, Player* player, TankController* Controller, LPSTR NickName);
+	Tank(PointUnit Point, Player* player, TankController* Contr, string NickName);
 	void SteepProc();
 	void CollProc(SolidUnit* Other);
 	void DrawProc();
+	void Die();
 	ContMask* contmask;
+	void Serialize();
 	~Tank();
 };
-void Serialize(Tank& Tank);
 class Map:
 	public ManagedUnit<Map>,
 	public GraphicUnit,
 	public SolidUnit
 {
 public:
-	Map(Image* image, LPCTSTR Mask, LPCTSTR AIPoints);
+	Map(string ResourcesDir);
+	int ChunksWidth, ChunksHeight;
+	bool* ChunksFree;
+	bool ChunkFree(int x, int y);
 
 	int PointsCount;
-	POINT* TargetPoints;
+	PointUnit* TargetPoints;
 	int* NearsCounts;
 	int** Net;
 	int*** Pathes;
@@ -78,64 +85,75 @@ public:
 	int** PathesDist;
 };
 class Player:
-	public ManagedUnit<Player>
+	public ManagedUnit<Player>,
+	public SendUnit<Player>,
+	public virtual SteepProcedUnit,
+	public Serialazable
 {
 public:
-	LPSTR NickName;
-	PointUnit SpawnPoint;
-	TankController* Controller;
+	string NickName;
+	TankController* Contr;
 	Tank* tank;
 	Server::Client* Client;
+	int SpawnPointIndex = -1;
 	bool PlaneReady;
-	Player(LPSTR NickName, TankController* Controller, double x, double y, double angle);
+	Player(string NickName, TankController* Contr);
 	void Spawn();
 	virtual void SpawnProc();
+	virtual PointUnit SelectSpawnPoint();
+	void SteepProc() override;
+	void Serialize();
+	~Player();
+	int WinsCount;
 	int KillsCount;
 	int DeathsCount;
 };
-//class Bot:
-//	public ManagedUnit<Bot>,
-//	public Player,
-//	public SteepProcedUnit
-//{
-//public:
-//	Bot(LPSTR NickName, double x, double y, double angle);
-//	void SteepProc();
-//	void SpawnProc();
-//private:
-//	bool Moving;
-//	POINT TargetPoint;
-//	Tank* TargetTank;
-//	int** Net;
-//	int PointsCount;
-//	POINT* TargetPoints;
-//	int* NearsCounts;
-//	int CurrentTargetPoint;
-//	int NearPoint;
-//	int PrevPoint;
-//	int* Path;
-//	int PathEnd;
-//	int PathLen;
-//	int PathPoint;
-//};
+class Bot:
+	public ManagedUnit<Bot>,
+	public Player,
+	public virtual SteepProcedUnit
+{
+public:
+	Bot(string NickName);
+	void SteepProc() override;
+	void SpawnProc() override;
+	PointUnit SelectSpawnPoint() override;
+private:
+	bool Moving;
+	PointUnit TargetPoint;
+	Tank* TargetTank;
+	int CurrentTargetPoint;
+	int NearPoint;
+	int PrevPoint;
+	int* Path;
+	int PathEnd;
+	int PathLen;
+	int PathPoint;
+};
 class Box:
 	public ManagedUnit<Box>,
 	public GraphicUnit,
-	public SolidPhysicUnit
+	public SolidPhysicUnit,
+	public SendUnit<Box>,
+	public Serialazable
 {
 public:
 	Box(int x, int y);
+	void Serialize();
 };
 class Plane:
 	public GraphicUnit,
 	public ManagedUnit<Plane>,
-	public SteepProcedUnit
+	public SteepProcedUnit,
+	public SendUnit<Plane>,
+	public Serialazable
 {
 public:
 	int Time;
 	double TurnSpeed;
 	Plane(int x, int y);
 	void SteepProc();
+	void Serialize();
 };
 class Explosive:
 	public ManagedUnit<Explosive>,
@@ -147,7 +165,8 @@ public:
 	void SteepProc();
 };
 class TankController:
-	SendUnit<TankController>
+	SendUnit<TankController>,
+	Serialazable
 {
 public:
 	bool KeyForwardPressed;
@@ -157,5 +176,5 @@ public:
 	bool KeyFirePressed;
 	bool KeyPlanePressed;
 	POINT Mouse;
+	void Serialize();
 };
-void Serialize(TankController& TankController);

@@ -9,7 +9,7 @@ RecvUnit<BaseUnit>::~RecvUnit()
 {
 	Manager.Free(ID);
 }
-template<> void RegisterRecvTypes<char, char>(UINT Type)
+void RecvUnit<char>::Register(UINT TypeID)
 {}
 
 
@@ -43,12 +43,11 @@ GameServer::GameServer(WORD Port):
 }
 void GameServer::DeleteClient(Client* Client)
 {
-	cout << "Client [" << Client->ID << "] disconnected." << std::endl;
+	cout << "Client [" << (int) Client->ID << "] disconnected." << std::endl;
 	::DeleteClient(Client);
 	BYTE ID = Client->ID;
 	delete Client;
 	Clients[ID] = NULL;
 }
-
-template<> void RegisterSendTypes<char, char>(UINT Type)
+void SendUnit<char>::Register(UINT TypeID)
 {}

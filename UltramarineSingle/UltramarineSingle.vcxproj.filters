@@ -1,217 +1,97 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="Core">
+      <UniqueIdentifier>{59043bc7-0e28-447d-948b-f260512fbaed}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    <Filter Include="Modules">
+      <UniqueIdentifier>{ac3bc2a7-1621-4e68-9a29-94eb83b9177d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Drive">
+      <UniqueIdentifier>{b9e75bc5-21a9-4713-bf52-61437cbe2ebf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp">
-      <UniqueIdentifier>{0b195500-f35d-469d-92e0-3f198e22018a}</UniqueIdentifier>
+    <Filter Include="Game">
+      <UniqueIdentifier>{0b8596b3-e4bf-499e-84df-69dd7eed384e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp\Bullet">
-      <UniqueIdentifier>{e771e088-12ec-4454-9717-d5d9293d5b67}</UniqueIdentifier>
+    <Filter Include="Modules\SolidPhysic">
+      <UniqueIdentifier>{2fc7ce28-45ba-4e6a-90ba-cb4a44ba7ae8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp\Explosive">
-      <UniqueIdentifier>{196c6d13-d66f-4994-9268-3ec76bbfc3cd}</UniqueIdentifier>
+    <Filter Include="Modules\Graphic">
+      <UniqueIdentifier>{afee82d6-4c8a-4146-b92c-bc38559d8986}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp\Fire">
-      <UniqueIdentifier>{47fe6e4d-e173-44d6-9d29-04f24b347e50}</UniqueIdentifier>
+    <Filter Include="Modules\Console">
+      <UniqueIdentifier>{86053b0b-84da-4390-aaab-4e1c6e9d2685}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp\Heal">
-      <UniqueIdentifier>{f36d5b16-597d-49c8-af0c-e0955c06a06f}</UniqueIdentifier>
+    <Filter Include="Modules\Misc">
+      <UniqueIdentifier>{b14c5224-97da-4955-93c1-cd3bae72b0f3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp\Hit">
-      <UniqueIdentifier>{c0c7cdc6-db57-45e9-b22f-f3116598fe06}</UniqueIdentifier>
+    <Filter Include="Modules\Solid">
+      <UniqueIdentifier>{a0b9c5ff-ad70-489c-bdca-99f1f29d2dba}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files\bmp\Map1">
-      <UniqueIdentifier>{a80f5260-057c-4262-b20f-ff3d7c40d2f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\bmp\Plane">
-      <UniqueIdentifier>{1334154e-20f7-4dc2-a213-631292ad9aa0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\bmp\Tank">
-      <UniqueIdentifier>{6036efd0-e3a1-4c02-b3ce-71c6fdedd6f3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\bmp\Tank\Body">
-      <UniqueIdentifier>{de28fa88-93dc-4819-abdb-4ead08290c3a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\bmp\Tank\Tower">
-      <UniqueIdentifier>{d4534f49-894b-4148-9a70-148b9bf8c4d8}</UniqueIdentifier>
+    <Filter Include="Modules\Physic">
+      <UniqueIdentifier>{687cbacf-aad7-4fbb-b46a-485f45a4ab18}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ChainData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Drive.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Management.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Misc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Physic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Single.h">
-      <Filter>Header Files</Filter>
+      <Filter>Modules\Physic</Filter>
     </ClInclude>
     <ClInclude Include="Solid.h">
-      <Filter>Header Files</Filter>
+      <Filter>Modules\Solid</Filter>
     </ClInclude>
     <ClInclude Include="SolidPhysic.h">
-      <Filter>Header Files</Filter>
+      <Filter>Modules\SolidPhysic</Filter>
     </ClInclude>
-    <ClInclude Include="IDManagement.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Graphic.h">
+      <Filter>Modules\Graphic</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Resource Files</Filter>
+    <ClInclude Include="Console.h">
+      <Filter>Modules\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Management.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Drive.h">
+      <Filter>Drive</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc.h">
+      <Filter>Modules\Misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Drive.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Management.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Misc.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Physic.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Modules\Physic</Filter>
     </ClCompile>
     <ClCompile Include="Solid.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Modules\Solid</Filter>
     </ClCompile>
     <ClCompile Include="SolidPhysic.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Modules\SolidPhysic</Filter>
     </ClCompile>
-    <ClCompile Include="IDManagement.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Graphic.cpp">
+      <Filter>Modules\Graphic</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Bitmaps\Logo.ico">
-      <Filter>Resource Files\bmp</Filter>
-    </Image>
-    <Image Include="Bitmaps\Font\Font.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="Bitmaps\Bullet\Bullet.bmp">
-      <Filter>Resource Files\bmp\Bullet</Filter>
-    </Image>
-    <Image Include="Bitmaps\Bullet\Bullet_Mask.bmp">
-      <Filter>Resource Files\bmp\Bullet</Filter>
-    </Image>
-    <Image Include="Bitmaps\Explosive\Explosive.bmp">
-      <Filter>Resource Files\bmp\Explosive</Filter>
-    </Image>
-    <Image Include="Bitmaps\Explosive\Explosive_Coll_Mask.bmp">
-      <Filter>Resource Files\bmp\Explosive</Filter>
-    </Image>
-    <Image Include="Bitmaps\Explosive\Explosive_Draw_Mask.bmp">
-      <Filter>Resource Files\bmp\Explosive</Filter>
-    </Image>
-    <Image Include="Bitmaps\Fire\Fire1.bmp">
-      <Filter>Resource Files\bmp\Fire</Filter>
-    </Image>
-    <Image Include="Bitmaps\Fire\Fire1_Mask.bmp">
-      <Filter>Resource Files\bmp\Fire</Filter>
-    </Image>
-    <Image Include="Bitmaps\Fire\Fire2.bmp">
-      <Filter>Resource Files\bmp\Fire</Filter>
-    </Image>
-    <Image Include="Bitmaps\Fire\Fire2_Mask.bmp">
-      <Filter>Resource Files\bmp\Fire</Filter>
-    </Image>
-    <Image Include="Bitmaps\Fire\Fire3.bmp">
-      <Filter>Resource Files\bmp\Fire</Filter>
-    </Image>
-    <Image Include="Bitmaps\Fire\Fire3_Mask.bmp">
-      <Filter>Resource Files\bmp\Fire</Filter>
-    </Image>
-    <Image Include="Bitmaps\Heal\Heal.bmp">
-      <Filter>Resource Files\bmp\Heal</Filter>
-    </Image>
-    <Image Include="Bitmaps\Heal\Heal_Mask.bmp">
-      <Filter>Resource Files\bmp\Heal</Filter>
-    </Image>
-    <Image Include="Bitmaps\Hit\Hit.bmp">
-      <Filter>Resource Files\bmp\Hit</Filter>
-    </Image>
-    <Image Include="Bitmaps\Hit\Hit_Mask.bmp">
-      <Filter>Resource Files\bmp\Hit</Filter>
-    </Image>
-    <Image Include="Bitmaps\Map1\Map1.bmp">
-      <Filter>Resource Files\bmp\Map1</Filter>
-    </Image>
-    <Image Include="Bitmaps\Map1\Map1_Coll_Mask.bmp">
-      <Filter>Resource Files\bmp\Map1</Filter>
-    </Image>
-    <Image Include="Bitmaps\Map1\Map1_Draw_Mask.bmp">
-      <Filter>Resource Files\bmp\Map1</Filter>
-    </Image>
-    <Image Include="Bitmaps\Plane\Plane.bmp">
-      <Filter>Resource Files\bmp\Plane</Filter>
-    </Image>
-    <Image Include="Bitmaps\Plane\Plane_Mask.bmp">
-      <Filter>Resource Files\bmp\Plane</Filter>
-    </Image>
-    <Image Include="Bitmaps\Tank\Body\TankBody.bmp">
-      <Filter>Resource Files\bmp\Tank\Body</Filter>
-    </Image>
-    <Image Include="Bitmaps\Tank\Body\TankBody_Mask.bmp">
-      <Filter>Resource Files\bmp\Tank\Body</Filter>
-    </Image>
-    <Image Include="Bitmaps\Tank\Tower\RoundTower.bmp">
-      <Filter>Resource Files\bmp\Tank\Tower</Filter>
-    </Image>
-    <Image Include="Bitmaps\Tank\Tower\RoundTower_Mask.bmp">
-      <Filter>Resource Files\bmp\Tank\Tower</Filter>
-    </Image>
-    <Image Include="Bitmaps\Tank\Tower\TankTower.bmp">
-      <Filter>Resource Files\bmp\Tank\Tower</Filter>
-    </Image>
-    <Image Include="Bitmaps\Tank\Tower\TankTower_Mask.bmp">
-      <Filter>Resource Files\bmp\Tank\Tower</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Map1_AIPoints.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
+    <ClCompile Include="Console.cpp">
+      <Filter>Modules\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Management.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Drive.cpp">
+      <Filter>Drive</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc.cpp">
+      <Filter>Modules\Misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="UltramarineSingle.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>

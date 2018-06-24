@@ -1,10 +1,11 @@
 #pragma once
+#include <type_traits>
 #include "Client.h"
 
 class GameClient;
 template<class T> class RecvUnit;
 template<class T> class SendUnit;
-extern GameClient* Client;
+extern GameClient* MainClient;
 
 class GameClient:
 	public Client
@@ -36,7 +37,7 @@ template<class T> WORD RecvUnit<T>::MessageType;
 template<class T> void RecvUnit<T>::Register(UINT TypeID)
 {
 	MessageType = TypeID;
-	Client->RegisterRecvProc(TypeID, RecvProc);
+	MainClient->RegisterRecvProc(TypeID, RecvProc);
 }
 template<class T> bool RecvUnit<T>::RecvProc(Client::MessageInfo* Message)
 {
@@ -48,7 +49,7 @@ template<class T> bool RecvUnit<T>::RecvProc(Client::MessageInfo* Message)
 	{
 		RecvedObject = new T;
 		Manager.Place(ID, (RecvUnit<BaseUnit>*) RecvedObject);
-		((RecvUnit<BaseUnit>*) RecvedObject)->ID = ID;
+		RecvedObject->RecvUnit<T>::ID = ID;
 		//cout<<Create<<endl;
 	}
 	else
@@ -60,10 +61,15 @@ template<class T> bool RecvUnit<T>::RecvProc(Client::MessageInfo* Message)
 
 template<class T, class... Types> void RegisterRecvTypes(UINT TypeID)
 {
+	if (std::is_same<T, char>::value) return;
 	RecvUnit<T>::Register(TypeID);
 	RegisterRecvTypes<Types..., char>(TypeID + 1);
 }
-template<> void RegisterRecvTypes<char, char>(UINT TypeID);
+template<> class RecvUnit<char>
+{
+public:
+	static void Register(UINT TypeID);
+};
 
 
 template<> class SendUnit<BaseUnit>:
@@ -92,13 +98,18 @@ template<class T> void SendUnit<T>::Register(UINT TypeID)
 }
 template<class T> void SendUnit<T>::Send()
 {
-	Client->SendToServer(NoNec, MessageType, ID, *((T*)this));
+	MainClient->SendToServer(NoNec, MessageType, ID, *((T*)this));
 }
 template<class T> WORD SendUnit<T>::MessageType;
 
 template<class T, class... Types> void RegisterSendTypes(UINT Type)
 {
+	if (std::is_same<T, char>::value) return;
 	SendUnit<T>::Register(Type);
 	RegisterSendTypes<Types..., char>(Type + 1);
 }
-template<> void RegisterSendTypes<char, char>(UINT Type);
+template<> class SendUnit<char>
+{
+public:
+	static void Register(UINT TypeID);
+};

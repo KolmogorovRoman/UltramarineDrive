@@ -62,10 +62,15 @@ template<class T> bool RecvUnit<T>::RecvProc(Server::MessageInfo* Message)
 
 template<class T, class... Types> void RegisterRecvTypes(UINT TypeID)
 {
+	if (std::is_same<T, char>::value) return;
 	RecvUnit<T>::Register(TypeID);
 	RegisterRecvTypes<Types..., char>(TypeID + 1);
 }
-template<> void RegisterRecvTypes<char, char>(UINT TypeID);
+template<> class RecvUnit<char>
+{
+public:
+	static void Register(UINT TypeID);
+};
 
 
 template<> class SendUnit<BaseUnit>:
@@ -73,6 +78,8 @@ template<> class SendUnit<BaseUnit>:
 {
 public:
 	SendUnit();
+	bool Create;
+	virtual void CreateSend() = 0;
 	virtual void Send() = 0;
 	UINT ID;
 	static IDManager<SendUnit<BaseUnit>, 65536, 65536> Manager;
@@ -85,6 +92,7 @@ template<class T> class SendUnit:
 {
 public:
 	static void Register(UINT TypeID);
+	void CreateSend() override;
 	void Send() override;
 	static WORD MessageType;
 };
@@ -92,15 +100,26 @@ template<class T> void SendUnit<T>::Register(UINT TypeID)
 {
 	MessageType = TypeID;
 }
+template<class T> void SendUnit<T>::CreateSend()
+{
+	Create = true;
+	Server->SendToAll(Nec, MessageType, ID, *((T*)this));
+}
 template<class T> void SendUnit<T>::Send()
 {
+	Create = false;
 	Server->SendToAll(NoNec, MessageType, ID, *((T*)this));
 }
 template<class T> WORD SendUnit<T>::MessageType;
 
 template<class T, class... Types> void RegisterSendTypes(UINT Type)
 {
+	if (std::is_same<T, char>::value) return;
 	SendUnit<T>::Register(Type);
 	RegisterSendTypes<Types..., char>(Type + 1);
 }
-template<> void RegisterSendTypes<char, char>(UINT Type);
+template<> class SendUnit<char>
+{
+public:
+	static void Register(UINT TypeID);
+};

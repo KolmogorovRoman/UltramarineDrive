@@ -94,7 +94,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;Glu32.lib;ws2_32.lib;glaux.lib;legacy_stdio_definitions.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;Glu32.lib;ws2_32.lib;glaux.lib;legacy_stdio_definitions.lib;avrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Users\�����\Documents\Visual Studio 2015\Projects\UltramarineDrive\UltramarineSingle\lib\Release\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
     </Link>
@@ -122,6 +122,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -150,24 +151,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ChainData.h" />
+    <ClInclude Include="Console.h" />
     <ClInclude Include="Drive.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Graphic.h" />
-    <ClInclude Include="IDManagement.h" />
     <ClInclude Include="Management.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="Physic.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="Single.h" />
     <ClInclude Include="Solid.h" />
     <ClInclude Include="SolidPhysic.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Console.cpp" />
     <ClCompile Include="Drive.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Graphic.cpp" />
-    <ClCompile Include="IDManagement.cpp" />
     <ClCompile Include="Management.cpp" />
     <ClCompile Include="Misc.cpp" />
     <ClCompile Include="Physic.cpp" />
@@ -175,44 +173,8 @@
     <ClCompile Include="SolidPhysic.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Bitmaps\Bullet\Bullet.bmp" />
-    <Image Include="Bitmaps\Bullet\Bullet_Mask.bmp" />
-    <Image Include="Bitmaps\Explosive\Explosive.bmp" />
-    <Image Include="Bitmaps\Explosive\Explosive_Coll_Mask.bmp" />
-    <Image Include="Bitmaps\Explosive\Explosive_Draw_Mask.bmp" />
-    <Image Include="Bitmaps\Fire\Fire1.bmp" />
-    <Image Include="Bitmaps\Fire\Fire1_Mask.bmp" />
-    <Image Include="Bitmaps\Fire\Fire2.bmp" />
-    <Image Include="Bitmaps\Fire\Fire2_Mask.bmp" />
-    <Image Include="Bitmaps\Fire\Fire3.bmp" />
-    <Image Include="Bitmaps\Fire\Fire3_Mask.bmp" />
-    <Image Include="Bitmaps\Heal\Heal.bmp" />
-    <Image Include="Bitmaps\Heal\Heal_Mask.bmp" />
-    <Image Include="Bitmaps\Hit\Hit.bmp" />
-    <Image Include="Bitmaps\Hit\Hit_Mask.bmp" />
-    <Image Include="Bitmaps\Logo.ico" />
-    <Image Include="Bitmaps\Map1\Map1.bmp" />
-    <Image Include="Bitmaps\Map1\Map1_Coll_Mask.bmp" />
-    <Image Include="Bitmaps\Map1\Map1_Draw_Mask.bmp" />
-    <Image Include="Bitmaps\Plane\Plane.bmp" />
-    <Image Include="Bitmaps\Plane\Plane_Mask.bmp" />
-    <Image Include="Bitmaps\Tank\Body\TankBody.bmp" />
-    <Image Include="Bitmaps\Tank\Body\TankBody_Mask.bmp" />
-    <Image Include="Bitmaps\Tank\Tower\TankTower.bmp" />
-    <Image Include="Bitmaps\Tank\Tower\TankTower_Mask.bmp" />
-    <Image Include="Bitmaps\Tank\Tower\RoundTower.bmp" />
-    <Image Include="Bitmaps\Tank\Tower\RoundTower_Mask.bmp" />
-    <Image Include="Bitmaps\Font\Font.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Map1_AIPoints.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="UltramarineSingle.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

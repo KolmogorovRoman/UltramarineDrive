@@ -1,6 +1,6 @@
 #include "GameClient.h"
 
-GameClient* Client;
+GameClient* MainClient;
 
 RecvUnit<BaseUnit>::RecvUnit()
 {}
@@ -9,7 +9,7 @@ RecvUnit<BaseUnit>::~RecvUnit()
 {
 	Manager.Free(ID);
 }
-template<> void RegisterRecvTypes<char, char>(UINT Type)
+void RecvUnit<char>::Register(UINT TypeID)
 {}
 
 GameClient::GameClient(WORD Port):
@@ -36,7 +36,7 @@ IDManager<SendUnit<BaseUnit>, 65536, 65536> SendUnit<BaseUnit>::Manager;
 SendUnit<BaseUnit>::~SendUnit()
 {
 	Manager.Free(ID);
-	Client->SendToServer(Nec, DeleteUnit, ID);
+	MainClient->SendToServer(Nec, DeleteUnit, ID);
 }
-template<> void RegisterSendTypes<char, char>(UINT Type)
+void SendUnit<char>::Register(UINT TypeID)
 {}

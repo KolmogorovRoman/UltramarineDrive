@@ -1,0 +1,7 @@
+scale 1.5
+cammode 1
+newbot Alpha
+newbot Beta
+newbot Gamma
+newbot Delta
+newbot Epsilon

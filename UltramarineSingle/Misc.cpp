@@ -1,14 +1,11 @@
 #include "Misc.h"
 
-int WindowWidth, WindowHeigth, xGlobal, yGlobal;
 double PixelInMeter, GlobalScale;
 
 Vector::Vector(){}
-Vector::Vector(int Ax, int Ay)
-{
-	x=Ax;
-	y=Ay;
-}
+Vector::Vector(double x, double y):
+	x(x), y(y)
+{}
 double Vector::Len()
 {
 	return sqrt(x*x+y*y);
@@ -279,9 +276,4 @@ void PointUnit::SetPoint(double x, double y, double angle)
 	this->x = x;
 	this->y = y;
 	this->angle = angle;
-}
-bool PointUnit::InScreen()
-{
-	if (x<-WindowWidth/2 || y<-WindowHeigth/2 || x>WindowWidth/2 || y>WindowHeigth/2) return false;
-	else return true;
 }

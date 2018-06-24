@@ -12,7 +12,6 @@ class Controller;
 #define PI 3.141592654
 #define SQRT2 1.414213562
 
-extern int WindowWidth, WindowHeigth, xGlobal, yGlobal;
 extern double PixelInMeter, GlobalScale;
 
 class Vector
@@ -20,7 +19,7 @@ class Vector
 public:
 	double x, y;
 	Vector();
-	Vector(int x, int y);
+	Vector(double x, double y);
 	double Len();
 	void Norm();
 };
@@ -69,7 +68,6 @@ public:
 	PointUnit();
 	PointUnit(POINT Point);
 	void SetPoint(double x, double y, double angle);
-	bool InScreen();
 };
 class Controller
 {

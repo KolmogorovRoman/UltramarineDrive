@@ -11,60 +11,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\UltramarineServer\Net.h" />
+    <ClInclude Include="..\UltramarineServer\NetProtocols.h" />
     <ClInclude Include="..\UltramarineServer\Serialization.h" />
+    <ClInclude Include="..\UltramarineSingle\Console.h" />
     <ClInclude Include="..\UltramarineSingle\Graphic.h" />
-    <ClInclude Include="..\UltramarineSingle\IDManagement.h" />
     <ClInclude Include="..\UltramarineSingle\Management.h" />
     <ClInclude Include="..\UltramarineSingle\Misc.h" />
     <ClInclude Include="..\UltramarineSingle\Physic.h" />
-    <ClInclude Include="..\UltramarineSingle\resource.h" />
     <ClInclude Include="..\UltramarineSingle\Solid.h" />
     <ClInclude Include="..\UltramarineSingle\SolidPhysic.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="Drive.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="GameClient.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\UltramarineSingle\UltramarineSingle.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\UltramarineSingle\Bitmaps\Bullet\Bullet.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Bullet\Bullet_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Explosive\Explosive.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Explosive\Explosive_Coll_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Explosive\Explosive_Draw_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire1.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire1_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire2.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire2_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire3.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Fire\Fire3_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Font\Font.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Heal\Heal.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Heal\Heal_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Hit\Hit.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Hit\Hit_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Logo.ico" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Map1\Map1.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Map1\Map1_Coll_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Map1\Map1_Draw_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Plane\Plane.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Plane\Plane_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Body\TankBody.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Body\TankBody_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\RoundTower.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\RoundTower_Mask.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\TankTower.bmp" />
-    <Image Include="..\UltramarineSingle\Bitmaps\Tank\Tower\TankTower_Mask.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\UltramarineSingle\Map1_AIPoints.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\UltramarineServer\Net.cpp" />
+    <ClCompile Include="..\UltramarineServer\NetProtocols.cpp" />
     <ClCompile Include="..\UltramarineServer\Serialization.cpp" />
+    <ClCompile Include="..\UltramarineSingle\Console.cpp" />
     <ClCompile Include="..\UltramarineSingle\Graphic.cpp" />
     <ClCompile Include="..\UltramarineSingle\Management.cpp" />
     <ClCompile Include="..\UltramarineSingle\Misc.cpp" />
@@ -74,7 +37,6 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="Drive.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\UltramarineSingle\UltramarineSingle.vcxproj">
@@ -145,6 +107,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\Users\Роман\Documents\Visual Studio 2015\Projects\UltramarineDrive\UltramarineServer;C:\Users\Роман\Documents\Visual Studio 2015\Projects\UltramarineDrive\UltramarineSingle;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

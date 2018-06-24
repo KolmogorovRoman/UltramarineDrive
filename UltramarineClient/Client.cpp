@@ -1,14 +1,20 @@
 #include "Client.h"
 
-Client::Client(USHORT Port)
-{
-	WSADATA wsadata;
-	WSAStartup(0x0202, &wsadata);
-	Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	NextNecNumber = 0;
-	Bind(NULL, Port);
-	StartRecv();
-}
+sockaddr_in Client::ServerAddr;
+BYTE Client::ID;
+std::map<UINT, Client::StoredMessage*> Client::Messages;
+std::mutex Client::MessagesMutex;
+bool Client::Connected = false;
+SOCKET Client::Socket;
+UINT Client::NextNecNumber;
+std::map<UINT, Client::RecvProc*> Client::RecvProcs;
+thread* Client::RecvThread;
+bool Client::StunResponseWaited = false;
+mutex Client::RecvMutex;
+condition_variable Client::ConnectCond;
+condition_variable Client::StunResponseCond;
+bool Client::StunResponseRecved = false;
+Syncronizer Client::NecResendSync;
 Client::StoredMessage::StoredMessage(MessageHeader Header, BytesArray* FullMessage):
 	Header(Header),
 	FullMessage(FullMessage)
@@ -16,6 +22,10 @@ Client::StoredMessage::StoredMessage(MessageHeader Header, BytesArray* FullMessa
 Client::StoredMessage::~StoredMessage()
 {
 	delete FullMessage;
+}
+Client::MessageInfo::~MessageInfo()
+{
+	delete Array;
 }
 Client::StoredMessage* Client::NewStoredMessage(MessageHeader Header, BytesArray* FullMessage)
 {
@@ -26,34 +36,35 @@ Client::StoredMessage* Client::NewStoredMessage(MessageHeader Header, BytesArray
 void Client::SendNecProc(MessageHeader Header, BytesArray* Message, sockaddr_in ClientAddr)
 {
 	StoredMessage* NewMessage = NewStoredMessage(Header, Message);
-	MessagesManager.Place(Header.Number, NewMessage);
-	MessagesList.push_back(NewMessage);
-	NewMessage->ThisInlist = std::prev(MessagesList.end());
+	Messages[Header.Number] = NewMessage;
 }
 void Client::ConfirmRecvProc(MessageInfo* Message)
 {
-	StoredMessage* StoredMessage = MessagesManager.Free(Message->Header.Number);
+	StoredMessage* StoredMessage = Messages[Message->Header.Number];
+	Messages.erase(Message->Header.Number);
 	if (StoredMessage != NULL)
 	{
-		MessagesList.erase(StoredMessage->ThisInlist);
 		delete StoredMessage;
 	}
 }
-void Client::NecResendProc(Client* This)
+void Client::NecResendProc()
 {
 	while (true)
 	{
-		for (auto Message : This->MessagesList)
+		MessagesMutex.lock();
+		for (auto Message : Messages)
 		{
-			if (Message->TimeToReSend <= 0)
+			if (Message.second->TimeToReSend <= 0)
 			{
-				This->SendTo(Message->FullMessage->Array, Message->FullMessage->Size, &This->ServerAddr);
-				Message->TimeToReSend = 50;
+				SendTo(Message.second->FullMessage->Array, Message.second->FullMessage->Size, &ServerAddr);
+				Message.second->TimeToReSend = 50;
 			}
 			else
-				Message->TimeToReSend--;
+				Message.second->TimeToReSend--;
 		}
-		Sleep(1);
+		MessagesMutex.unlock();
+		//Sleep(1);
+		NecResendSync.Sync(1ms);
 	}
 }
 void Client::SendTo(BYTE* Buff, int BuffLen, SOCKADDR_IN* DestAddr)
@@ -68,57 +79,69 @@ void Client::SendConfirm(UINT Number, sockaddr_in* DestAddr)
 	BytesArray Message(Header);
 	SendTo(Message.Array, Message.Size, DestAddr);
 }
-Client::Client()
+void Client::Init()
 {
 	WSADATA wsadata;
 	WSAStartup(0x0202, &wsadata);
 	Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	NextNecNumber = 0;
+	RegisterRecvProc(ConnectSuccess, (function<bool(MessageInfo*)>) [](MessageInfo* Message)
+	{
+		Connected = true;
+		ConnectCond.notify_one();
+		Message->Array->Deserialize(ID);
+		//cout << "Connected";
+		return true;
+	});
+	RegisterRecvProc(DeleteUnit, [](Client::MessageInfo* Message)
+	{
+		UINT ID;
+		Message->Array->Deserialize(ID);
+		RecvUnit<BaseUnit>::ManagerMutex.lock();
+		RecvUnit<BaseUnit>* Unit = RecvUnit<BaseUnit>::Manager[ID];
+		size_t res = RecvUnit<BaseUnit>::Manager.erase(ID);
+		RecvUnit<BaseUnit>::ManagerMutex.unlock();
+		if (Unit != NULL)
+		{
+			Unit->Delete();
+		}
+		return true;
+	});
 }
-Client::Client(char* IP, USHORT Port)
-{
-	WSADATA wsadata;
-	WSAStartup(0x0202, &wsadata);
-	Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	NextNecNumber = 0;
-	Bind(IP, Port);
-	StartRecv();
-}
-void Client::MainRecvProc(Client* This)
+void Client::MainRecvProc()
 {
 	while (true)
 	{
 		MessageInfo Message;
-		Message.Array = NewArray(MessageHeaderSize);
-		recvfrom(This->Socket, (char*) Message.Array->Array, MessageHeaderSize, MSG_PEEK, (sockaddr*) &Message.FromAddr, &SockaddrSize);
+		Message.Array = BytesArray::New(MessageHeaderSize);
+		recvfrom(Socket, (char*) Message.Array->Array, MessageHeaderSize, MSG_PEEK, (sockaddr*) &Message.FromAddr, &SockaddrSize);
 		Message.Array->Deserialize(Message.Header);
 		if (Message.Header.Const != 'UD')
 		{
-			if (This->StunResponseWaited)
+			if (StunResponseWaited)
 			{
-				This->StunResponseRecved = true;
-				This->StunResponseCond.notify_one();
+				StunResponseRecved = true;
+				StunResponseCond.notify_one();
 			}
 			else
 			{
-				recvfrom(This->Socket, NULL, 0, 0, NULL, NULL);
+				recvfrom(Socket, NULL, 0, 0, NULL, NULL);
 			}
 			continue;
 		}
 		if (Message.Header.NetType == Confirm)
 		{
-			recvfrom(This->Socket, NULL, 0, 0, NULL, NULL);
-			This->ConfirmRecvProc(&Message);
+			recvfrom(Socket, NULL, 0, 0, NULL, NULL);
+			ConfirmRecvProc(&Message);
 			continue;
 		}
 		Message.Array->Recreate(Message.Header.Length);
-		recvfrom(This->Socket, (char*) Message.Array->Array, Message.Header.Length, 0, (sockaddr*) &Message.FromAddr, &SockaddrSize);
+		recvfrom(Socket, (char*) Message.Array->Array, Message.Header.Length, 0, (sockaddr*) &Message.FromAddr, &SockaddrSize);
 		if (Message.Header.NetType == Nec)
 		{
-			This->SendConfirm(Message.Header.Number, &Message.FromAddr);
+			SendConfirm(Message.Header.Number, &Message.FromAddr);
 		}
 
-		RecvProc* RecvProc = This->RecvProcsManager.Get(Message.Header.Type);
+		RecvProc* RecvProc = RecvProcs[Message.Header.Type];
 		while (RecvProc != NULL)
 		{
 			if (RecvProc->Proc(&Message) == false) break;
@@ -133,16 +156,16 @@ void Client::Bind(char* IP, USHORT Port)
 }
 void Client::StartRecv()
 {
-	RecvThread = new thread(MainRecvProc, this);
+	RecvThread = new thread(MainRecvProc);
 }
 
 void Client::RegisterRecvProc(WORD Type, function<bool(MessageInfo* Message)>& Proc)
 {
-	RecvProc* Last = RecvProcsManager.Get(Type);
+	RecvProc* Last = RecvProcs[Type];
 	if (Last == NULL)
 	{
 		Last = new RecvProc();
-		RecvProcsManager.Place(Type, Last);
+		RecvProcs[Type] = Last;
 	}
 	else
 	{
@@ -181,7 +204,7 @@ sockaddr_in Client::GetSelfAddr(char* StunIP, USHORT StunPort)
 	auto RecvFunc = [&]()->void
 	{
 		StunMessageHeader MessageHeader;
-		BytesArray Message = *NewArray(Sizeof(MessageHeader));
+		BytesArray Message = *BytesArray::New(Sizeof(MessageHeader));
 		unique_lock<mutex> Lock(RecvMutex);
 		while (!StunResponseRecved)
 		{
@@ -224,9 +247,34 @@ sockaddr_in Client::GetSelfAddr(char* StunIP, USHORT StunPort)
 	SelfAddr.sin_port = ntohs(SelfAddr.sin_port);
 	return SelfAddr;
 }
-Client::~Client()
+
+RecvUnit<BaseUnit>::RecvUnit()
+{}
+std::map<UINT, RecvUnit<BaseUnit>*> RecvUnit<BaseUnit>::Manager;
+std::mutex RecvUnit<BaseUnit>::ManagerMutex;
+RecvUnit<BaseUnit>::~RecvUnit()
 {
-	closesocket(Socket);
-	delete RecvThread;
-	WSACleanup();
+	ManagerMutex.lock();
+	size_t res = Manager.erase(ID);
+	ManagerMutex.unlock();
 }
+void RecvUnit<char>::Register(UINT& TypeID)
+{}
+UINT NextRecvType = MessagesTypes::DeleteUnit+1;
+
+
+SendUnit<BaseUnit>::SendUnit()
+{
+	ID = NextID++;
+	Manager[ID] = this;
+}
+std::map<UINT, SendUnit<BaseUnit>*> SendUnit<BaseUnit>::Manager;
+UINT SendUnit<BaseUnit>::NextID = 0;
+SendUnit<BaseUnit>::~SendUnit()
+{
+	Manager.erase(ID);
+	Client::SendToServer(Nec, DeleteUnit, ID);
+}
+void SendUnit<char>::Register(UINT& TypeID)
+{}
+UINT NextSendType = MessagesTypes::DeleteUnit + 1;

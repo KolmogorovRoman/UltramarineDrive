@@ -76,7 +76,7 @@ TwinVector ImpactCalc(Mask* Mask1, Mask* Mask2, int x1, int y1, int x2, int y2)
 					if (lx1 + x + 1 < w1 && ly1 + y - 1 >= 0 && Mask1Array[lx1 + x + 1 + (ly1 + y - 1)*w1] == 1) Ret.vct2 += v(SQRT2, -SQRT2);
 				}
 				/*glLoadIdentity();
-				glOrtho(-400, 400, -300, 300, 0, -100);
+				glOrtho(-MainCamera.Width/2, MainCamera.Width/2, -MainCamera.Height/2, MainCamera.Height/2, 0, -100);
 				glTranslatef(0, 0, 0);
 				glRotatef(0, 0, 0, 1);
 				glBindTexture(GL_TEXTURE_2D, 0);

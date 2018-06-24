@@ -12,6 +12,21 @@ BytesArray::BytesArray(BytesArray& Other):
 	Array(Other.Array),
 	Pointer(Other.Pointer)
 {}
+BytesArray* BytesArray::New(UINT Size)
+{
+	BytesArray* Array = new BytesArray;
+	Array->Size = Size;
+	Array->Array = new BYTE[Array->Size];
+	return Array;
+}
+BytesArray* BytesArray::New(UINT Size, void* Pointer)
+{
+	BytesArray* Array = new BytesArray;
+	Array->Size = Size;
+	Array->Array = new BYTE[Array->Size];
+	return Array;
+	memcpy(Array->Array, Pointer, Size);
+}
 void BytesArray::Recreate(UINT Size)
 {
 	this->Size = Size;
@@ -36,22 +51,6 @@ void BytesArray::ResetPointer()
 	Pointer = 0;
 }
 
-BytesArray* NewArray(UINT Size)
-{
-	BytesArray* Array = new BytesArray;
-	Array->Size = Size;
-	Array->Array = new BYTE[Array->Size];
-	return Array;
-}
-BytesArray* NewArray(UINT Size, void* Pointer)
-{
-	BytesArray* Array = new BytesArray;
-	Array->Size = Size;
-	Array->Array = new BYTE[Array->Size];
-	return Array;
-	memcpy(Array->Array, Pointer, Size);
-}
-
 void MovePointer(UINT Size)
 {
 	CurrentArray->Pointer += Size;
@@ -60,55 +59,75 @@ void IncSize(UINT Size)
 {
 	CurrentArray->Size += Size;
 }
-void AddBytes(void* Source, UINT Size)
+void WriteBytes(const void* Source, UINT Size)
 {
-	//if (*((BYTE*) &(BytesOrderConst)) == 0x55)
+	if (*((BYTE*) &(BytesOrderConst)) == 0x55)
 	{
 		memcpy(&(CurrentArray->Array[CurrentArray->Pointer]), Source, Size);
 	}
-	/*else
+	else
 		for (int i = 0, j = Size - 1; i < Size; i++, j--)
-			CurrentArray->Array[CurrentArray->Pointer + i] = *(((BYTE*) Source) + j);*/
+			CurrentArray->Array[CurrentArray->Pointer + i] = *(((BYTE*) Source) + j);
 	MovePointer(Size);
 }
 void ReadBytes(void* Dest, UINT Size)
 {
-	//if (*((BYTE*) &(BytesOrderConst)) == 0x55)
+	if (*((BYTE*) &(BytesOrderConst)) == 0x55)
 		memcpy(Dest, &CurrentArray->Array[CurrentArray->Pointer], Size);
-	/*else
+	else
 		for (int i = 0, j = Size - 1; i < Size; i++, j--)
-			*(((BYTE*) Dest) + j) = CurrentArray->Array[CurrentArray->Pointer + i];*/
+			*(((BYTE*) Dest) + j) = CurrentArray->Array[CurrentArray->Pointer + i];
 	MovePointer(Size);
 }
 
-template <> void Serialize(char*& str)
+#define DEF_SERIALIZE_FOR_STRING(T) \
+void Serialize(T*& str) \
+{ \
+	if (SizeCalculation) IncSize(sizeof(strlen(str)) + strlen(str) + 1); \
+	if (Serialazing) \
+	{ \
+		UINT Len = strlen(str) + 1; \
+		WriteBytes(&Len, sizeof (Len)); \
+		WriteBytes(str, Len); \
+	} \
+	if (Deserialazing) \
+	{ \
+		UINT Len; \
+		ReadBytes(&Len, sizeof Len); \
+		str = new T[Len]; \
+		ReadBytes(str, Len); \
+	} \
+}
+DEF_SERIALIZE_FOR_STRING(char)
+void Serialize(std::string& Val)
 {
-	if (SizeCalculation)
+	if (SizeCalculation) IncSize(sizeof(Val.size()) + Val.size() * sizeof(char));
+	if (Serialazing)
 	{
-		IncSize(sizeof(strlen(str)) + strlen(str) + 1);
+		UINT Len = Val.size() * sizeof(char);
+		WriteBytes(&Len, sizeof(Len));
+		WriteBytes(Val.c_str(), Len);
 	}
-	if (CopyingToArray)
-	{
-		UINT Len = strlen(str) + 1;
-		AddBytes(&Len, sizeof Len);
-		AddBytes(str, Len);
-	}
-	if (CopyingFromArray)
+	if (Deserialazing)
 	{
 		UINT Len;
-		ReadBytes(&Len, sizeof Len);
-		str = new char[Len];
-		ReadBytes(str, Len);
+		ReadBytes(&Len, sizeof Len * sizeof(char));
+		char* str = new char[Len];
+		ReadBytes(str, Len * sizeof(char));
+		Val.assign(str, Len);
 	}
 }
-void Serialize(VoidBytes& Val)
+
+void Serial() {}
+
+void VoidBytes::Serialize()
 {
 	if (SizeCalculation)
 	{
-		IncSize(Val.Size);
+		IncSize(Size);
 	}
-	if (CopyingToArray || CopyingFromArray)
+	if (Serialazing || Deserialazing)
 	{
-		MovePointer(Val.Size);
+		MovePointer(Size);
 	}
 }

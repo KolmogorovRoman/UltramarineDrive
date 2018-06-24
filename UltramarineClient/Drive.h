@@ -8,14 +8,19 @@
 #include "Physic.h"
 #include "SolidPhysic.h"
 #include "Solid.h"
-#include "GameClient.h"
+#include "Client.h"
+#include "Console.h"
 
 extern Controller Contr1;
 extern Syncronizer* Sync1;
-extern GameClient* Client;
 extern void GameInit();
-extern void PreSteepProc();
+extern void SteepProc();
 extern void PostSteepProc();
+
 void Control();
+
+extern Layer* LowestLayer;
+extern Layer* InterfaceLayer;
+extern Layer* InterfaceBackLayer;
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow);

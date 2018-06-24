@@ -1,28 +1,55 @@
 #pragma once
 #include <Windows.h>
-
-typedef char SBYTE;
-typedef short SWORD;
-typedef int SDWORD;
-typedef unsigned long long QWORD;
-typedef long long SQWORD;
+#include <type_traits>
+#include <string>
 
 struct VoidBytes;
 struct BytesArray;
-class BytesArraysList;
 
-enum SerializingStage
+class Serialazable
+{};
+
+enum class SerializingStage
 {
-	enum_SizeCalculation,
-	enum_CopyingToArray,
-	enum_CopyingFromArray
+	GetSize,
+	CopyTo,
+	CopyFrom
 };
+#define SizeCalculation \
+(CurrentStage == SerializingStage::GetSize)
+#define Serialazing \
+(CurrentStage == SerializingStage::CopyTo)
+#define Deserialazing \
+(CurrentStage == SerializingStage::CopyFrom)
 
 extern thread_local BytesArray* CurrentArray;
 extern thread_local SerializingStage CurrentStage;
 
-template<typename T, typename... Types> inline void Serialize(T& Val, Types&... Vals);
-template<typename T> inline void Serialize(T& Val);
+template <typename... Types> UINT Sizeof(Types&&... Vals)
+{
+	BytesArray Array;
+	CurrentArray = &Array;
+	CurrentStage = SerializingStage::GetSize;
+	Serialize(Vals...);
+	return Array.Size;
+}
+
+template <typename T>
+typename std::enable_if<std::is_base_of<Serialazable, T>::value>::type Serialize(T& Val)
+{
+	Val.Serialize();
+}
+template <typename T>
+typename std::enable_if<!std::is_base_of<Serialazable, T>::value>::type Serialize(T& Val)
+{
+	if (SizeCalculation) IncSize(sizeof Val);
+	if (Serialazing) WriteBytes(&Val, sizeof Val);
+	if (Deserialazing) ReadBytes(&Val, sizeof Val);
+}
+#define DECL_SERIALIZE_FOR_STRING(T) \
+void Serialize(T*& Val);
+DECL_SERIALIZE_FOR_STRING(char)
+void Serialize(std::string& Val);
 
 struct BytesArray
 {
@@ -31,110 +58,57 @@ struct BytesArray
 	UINT Pointer = 0;
 	BytesArray();
 	BytesArray(BytesArray& Other);
-	template <typename... Types> BytesArray(Types&... Vals)
+	template <typename... Types> BytesArray(Types&&... Vals)
 	{
 		CurrentArray = this;
-		CurrentStage = enum_SizeCalculation;
-		::Serialize(Vals...);
+		CurrentStage = SerializingStage::GetSize;
+		Serial(Vals...);
 		Array = new BYTE[Size];
-		CurrentStage = enum_CopyingToArray;
-		::Serialize(Vals...);
-		Pointer = 0;
+		CurrentStage = SerializingStage::CopyTo;
+		Serial(Vals...);
+		ResetPointer();
 	}
+	static BytesArray* New(UINT Size);
+	static BytesArray* New(UINT Size, void* Pointer);
 	void Recreate(UINT Size);
 	void Recreate(void* Pointer);
 	void Recreate(UINT Size, void* Pointer);
 	void ResetPointer();
-	template <typename... Types> void Serialize(Types&... Vals)
+	template <typename... Types> void Serialize(Types&&... Vals)
 	{
 		CurrentArray = this;
-		CurrentStage = enum_CopyingToArray;
-		::Serialize(Vals...);
+		CurrentStage = SerializingStage::CopyTo;
+		Serial(Vals...);
 	}
-	template <typename... Types> void Deserialize(Types&... Vals)
+	template <typename... Types> void Deserialize(Types&&... Vals)
 	{
 		CurrentArray = this;
-		CurrentStage = enum_CopyingFromArray;
-		::Serialize(Vals...);
+		CurrentStage = SerializingStage::CopyFrom;
+		Serial(Vals...);
 	}
 	~BytesArray()
 	{
 		delete[] Array;
 	};
 };
-BytesArray* NewArray(UINT Size);
-BytesArray* NewArray(UINT Size, void* Pointer);
+
 void MovePointer(UINT Size);
 void IncSize(UINT Size);
-void AddBytes(void* Source, UINT Size);
+void WriteBytes(const void* Source, UINT Size);
 void ReadBytes(void* Dest, UINT Size);
 
-template <typename... Types> UINT Sizeof(Types&... Vals)
-{
-	BytesArray Array;
-	CurrentArray = &Array;
-	CurrentStage = enum_SizeCalculation;
-	Serialize(Vals...);
-	return Array.Size;
-}
-
-template <typename T, typename... Types> void Serialize(T& Val, Types&... Vals)
+template <typename T, typename... Types> void Serial(T&& Val, Types&&... Vals)
 {
 	Serialize(Val);
-	Serialize(Vals...);
+	Serial(Vals...);
 }
+void Serial();
 
-#define SizeCalculation \
-(CurrentStage == enum_SizeCalculation)
-
-#define CopyingToArray \
-(CurrentStage == enum_CopyingToArray)
-
-#define CopyingFromArray \
-(CurrentStage == enum_CopyingFromArray)
-
-template <typename T> void Serialize(T& t)
-{
-	if (SizeCalculation)
-	{
-		IncSize(sizeof t);
-	}
-	if (CopyingToArray)
-	{
-		AddBytes(&t, sizeof t);
-	}
-	if (CopyingFromArray)
-	{
-		ReadBytes(&t, sizeof t);
-	}
-}
-//template <typename T> void Serialize(T*& str)
-//{
-//	if (SizeCalculation)
-//	{
-//		IncSize(sizeof(strlen(str)) + strlen(str) + 1);
-//	}
-//	if (CopyingToArray)
-//	{
-//		UINT Len = strlen(str) + 1;
-//		AddBytes(&Len, sizeof Len);
-//		AddBytes(str, Len);
-//	}
-//	if (CopyingFromArray)
-//	{
-//		UINT Len;
-//		ReadBytes(&Len, sizeof Len);
-//		str = new char[Len];
-//		ReadBytes(str, Len);
-//	}
-//}
-template <> void Serialize(char*& str);
-
-struct VoidBytes
+struct VoidBytes:Serialazable
 {
 	UINT Size;
 	VoidBytes(UINT Size):
 		Size(Size)
 	{}
+	void Serialize();
 };
-void Serialize(VoidBytes& Val);

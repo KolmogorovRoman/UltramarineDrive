@@ -1,0 +1,6 @@
+scale 1
+cammode 0
+fullscreen 0
+newbot alpha
+newbot Beta
+newbot Gamma

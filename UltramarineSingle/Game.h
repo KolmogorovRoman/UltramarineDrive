@@ -8,14 +8,15 @@ class Box;
 class Player;
 class Plane;
 class Explosive;
+class TankController;
 
 #include "Drive.h"
-#include "resource.h"
 using namespace std;
 
 extern Controller Contr1;
 extern HINSTANCE hInst;
 extern RECT RectInScreen;
+extern Console* GameConsole;
 
 void GameInit();
 
@@ -39,7 +40,7 @@ class Tank:
 	public SteepProcedUnit
 {
 public:
-	Controller* Contr;
+	TankController* Contr;
 	GraphicUnit* Tower;
 	Player* player;
 	int UserID;
@@ -50,13 +51,15 @@ public:
 	int KeyFire;
 	int HitPoints;
 	int FireReady;
-	LPSTR NickName;
+	string NickName;
 	int NickLen;
 	double TowerAngle;
-	Tank(double x, double y, double angle, Player* player, Controller* Cont, LPSTR NickName, int KeyForward, int KeyBack, int KeyRight, int KeyLeft, int KeyFire);
+	double TowerSpeed;
+	Tank(PointUnit Point, Player* player, TankController* Contr, string NickName);
 	void SteepProc();
 	void CollProc(SolidUnit* Other);
 	void DrawProc();
+	void Die();
 	ContMask* contmask;
 	~Tank();
 };
@@ -66,10 +69,16 @@ class Map:
 	public SolidUnit
 {
 public:
-	Map(Image* image, LPCTSTR Mask, LPCTSTR AIPoints);
+	Map(string ResourcesDir);
 
+	struct Point:
+		public PointUnit
+	{
+		std::list<Point*> Nears;
+	};
+	std::list<PointUnit> Points;
 	int PointsCount;
-	POINT* TargetPoints;
+	PointUnit* TargetPoints;
 	int* NearsCounts;
 	int** Net;
 	int*** Pathes;
@@ -80,14 +89,16 @@ class Player:
 	public ManagedUnit<Player>
 {
 public:
-	LPSTR NickName;
-	PointUnit SpawnPoint;
-	Controller* Contr;
+	string NickName;
+	TankController* Contr;
 	Tank* tank;
+	int SpawnPointIndex = -1;
 	bool PlaneReady;
-	Player(LPSTR NickName, Controller* Contr, double x, double y, double angle);
+	Player(string NickName, TankController* Contr);
 	void Spawn();
 	virtual void SpawnProc();
+	virtual PointUnit SelectSpawnPoint();
+	int WinsCount;
 	int KillsCount;
 	int DeathsCount;
 };
@@ -97,17 +108,14 @@ class Bot:
 	public SteepProcedUnit
 {
 public:
-	Bot(LPSTR NickName, double x, double y, double angle);
-	void SteepProc();
-	void SpawnProc();
+	Bot(string NickName);
+	void SteepProc() override;
+	void SpawnProc() override;
+	PointUnit SelectSpawnPoint() override;
 private:
 	bool Moving;
-	POINT TargetPoint;
+	PointUnit TargetPoint;
 	Tank* TargetTank;
-	int** Net;
-	int PointsCount;
-	POINT* TargetPoints;
-	int* NearsCounts;
 	int CurrentTargetPoint;
 	int NearPoint;
 	int PrevPoint;
@@ -123,6 +131,7 @@ class Box:
 {
 public:
 	Box(int x, int y);
+	void CollProc(SolidUnit* Other) override;
 };
 class Plane:
 	public GraphicUnit,
@@ -143,4 +152,25 @@ class Explosive:
 public:
 	Explosive(int x, int y);
 	void SteepProc();
+};
+class TankController
+{
+	int KeyForwardCode;
+	int KeyBackCode;
+	int KeyRightCode;
+	int KeyLeftCode;
+	int KeyFireCode;
+	int KeyPlaneCode;
+	Controller* Contr;
+public:
+	bool KeyForwardPressed;
+	bool KeyBackPressed;
+	bool KeyRightPressed;
+	bool KeyLeftPressed;
+	bool KeyFirePressed;
+	bool KeyPlanePressed;
+	POINT Mouse;
+	TankController();
+	TankController(Controller* Contr, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyFireCode, int KeyPlaneCode);
+	void Check();
 };

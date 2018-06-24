@@ -1,5 +1,18 @@
 #include "Server.h"
 
+SOCKET Server::Socket;
+UINT Server::NextNecNumber = 0;
+std::map<UINT, Server::RecvProc*> Server::RecvProcs;
+thread* Server::RecvThread;
+thread* Server::ClientsConnectCheckThread;
+bool Server::StunResponseWaited;
+mutex Server::RecvMutex;
+condition_variable Server::StunResponseCond;
+bool Server::StunResponseRecved;
+std::map<UINT, Server::StoredMessage*> Server::Messages;
+Server::Client* Server::Clients[256];
+CRITICAL_SECTION Server::MessagesListCS;
+Syncronizer Server::NecResendSync;
 Server::Client::Client(sockaddr_in Addr, BYTE ID):
 	Addr(Addr), ID(ID), Player(NULL), TimeToLastRecv(0)
 {}
@@ -7,77 +20,95 @@ Server::Client::~Client()
 {
 	//delete Player;
 }
-Server::Server(WORD Port)
+void Server::Init(WORD Port)
 {
 	WSADATA wsadata;
 	WSAStartup(0x0202, &wsadata);
 	Socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	NextNecNumber = 0;
+	for (int i = 0; i < 256; i++)
+	{
+		Clients[i] = NULL;
+	}
 	Bind(NULL, Port);
-	thread* NecResendThread = new thread(NecResendProc, this);
-	NecResendThread->detach();
+	InitializeCriticalSection(&MessagesListCS);
 	RegisterRecvProc(ConnectRequest, false, (function<bool(MessageInfo*)>) [&](MessageInfo* Message)
 	{
-		for (int i = 0; i < ClientsCount; i++)
+		for (int i = 0; i < 256; i++)
 		{
-			if (Clients[i]->Addr.sin_addr.S_un.S_addr == Message->FromAddr.sin_addr.S_un.S_addr && Clients[i]->Addr.sin_port == Message->FromAddr.sin_port)
+			if (Clients[i] != NULL
+				&&
+				Clients[i]->Addr.sin_addr.S_un.S_addr == Message->FromAddr.sin_addr.S_un.S_addr
+				&&
+				Clients[i]->Addr.sin_port == Message->FromAddr.sin_port)
 				return false;
 		}
-		Clients[ClientsCount] = new Client(Message->FromAddr, ClientsCount);
-		Message->Client = Clients[ClientsCount];
-		SendToClient(Nec, ConnectSuccess, ClientsCount, ClientsCount);
-		cout << "Client [" << ClientsCount << "] connected." << std::endl;
-		ClientsCount++;
+		BYTE NewID = 0;
+		for (int i = 0; i < 256; i++)
+		{
+			if (Clients[i] == NULL)
+			{
+				NewID = i;
+				break;
+			}
+		}
+		Clients[NewID] = new Client(Message->FromAddr, NewID);
+		Message->Client = Clients[NewID];
+		SendToClient(Nec, ConnectSuccess, NewID, NewID);
+		string NickName;
+		auto MessagePointer = Message->Array->Pointer;
+		Message->Array->Deserialize(NickName);
+		Message->Array->Pointer = MessagePointer;
+		cout << "Client [" << (int) NewID << ":" << NickName << "] connected." << std::endl;
 		return true;
 	});
-	StartRecv();
 }
-Server::StoredMessage::StoredMessage(MessageHeader Header, BytesArray* FullMessage, sockaddr_in ClientAddr):
+Server::StoredMessage::StoredMessage(MessageHeader Header, BytesArray* FullMessage, sockaddr_in ClientAddr, WORD TimeToResend):
 	Header(Header),
 	FullMessage(FullMessage),
-	ClientAddr(ClientAddr)
+	ClientAddr(ClientAddr),
+	TimeToReSend(TimeToReSend)
 {}
 Server::StoredMessage::~StoredMessage()
 {
 	if (FullMessage != NULL) delete FullMessage;
 }
-Server::StoredMessage* Server::NewStoredMessage(MessageHeader Header, BytesArray* FullMessage, sockaddr_in ClientAddr)
-{
-	StoredMessage* Message = new StoredMessage(Header, FullMessage, ClientAddr);
-	Message->TimeToReSend = 1000;
-	return Message;
-}
 void Server::SendNecProc(MessageHeader Header, BytesArray* Message, sockaddr_in ClientAddr)
 {
-	StoredMessage* NewMessage = NewStoredMessage(Header, Message, ClientAddr);
-	MessagesManager.Place(Header.Number, NewMessage);
-	MessagesList.push_back(NewMessage);
-	NewMessage->ThisInlist = std::prev(MessagesList.end());
+	EnterCriticalSection(&MessagesListCS);
+	StoredMessage* NewMessage = new StoredMessage(Header, Message, ClientAddr, 1000);
+	Messages[Header.Number] = NewMessage;
+	LeaveCriticalSection(&MessagesListCS);
 }
 void Server::ConfirmRecvProc(MessageInfo* Message)
 {
-	StoredMessage* StoredMessage = MessagesManager.Free(Message->Header.Number);
-	if (StoredMessage != NULL)
+	EnterCriticalSection(&MessagesListCS);
+	StoredMessage* storedMessage = Messages[Message->Header.Number];
+	Messages.erase(Message->Header.Number);
+	if (storedMessage != NULL)
 	{
-		MessagesList.erase(StoredMessage->ThisInlist);
-		delete StoredMessage;
+		delete storedMessage;
 	}
+	LeaveCriticalSection(&MessagesListCS);
 }
-void Server::NecResendProc(Server* This)
+void Server::NecResendProc()
 {
 	while (true)
 	{
-		for (auto Message : This->MessagesList)
+		EnterCriticalSection(&MessagesListCS);
+		for (auto Message : Messages)
 		{
-			if (Message->TimeToReSend <= 0)
+			if (Message.second->TimeToReSend <= 0)
 			{
-				This->SendTo(Message->FullMessage->Array, Message->FullMessage->Size, &Message->ClientAddr);
-				Message->TimeToReSend = 50;
+				SendTo(Message.second->FullMessage->Array, Message.second->FullMessage->Size, &Message.second->ClientAddr);
+				Message.second->TimeToReSend = 50;
 			}
 			else
-				Message->TimeToReSend--;
+				Message.second->TimeToReSend--;
 		}
-		Sleep(1);
+		LeaveCriticalSection(&MessagesListCS);
+		//Sleep(1);
+		NecResendSync.Sync(1ms);
 	}
 }
 void Server::SendTo(BYTE* Buff, int BuffLen, SOCKADDR_IN* DestAddr)
@@ -92,59 +123,59 @@ void Server::SendConfirm(UINT Number, sockaddr_in* DestAddr)
 	BytesArray Message(Header);
 	SendTo(Message.Array, Message.Size, DestAddr);
 }
-void Server::MainRecvProc(Server* This)
+void Server::MainRecvProc()
 {
 	while (true)
 	{
 		MessageInfo Message;
-		Message.Array = NewArray(MessageHeaderSize);
-		int res = recvfrom(This->Socket, (char*) Message.Array->Array, MessageHeaderSize, MSG_PEEK, (sockaddr*) &Message.FromAddr, &SockaddrSize);
+		Message.Array = BytesArray::New(MessageHeaderSize);
+		int res = recvfrom(Socket, (char*) Message.Array->Array, MessageHeaderSize, MSG_PEEK, (sockaddr*) &Message.FromAddr, &SockaddrSize);
 		int err = WSAGetLastError();
 		if (err == 10054)
 			continue;
 		Message.Array->Deserialize(Message.Header);
 		Message.Client = NULL;
-		for (int i = 0; i < This->ClientsCount; i++)
+		for (int i = 0; i < 256; i++)
 		{
-			if (This->Clients[i] != NULL
+			if (Clients[i] != NULL
 				&&
-				This->Clients[i]->Addr.sin_addr.S_un.S_addr == Message.FromAddr.sin_addr.S_un.S_addr
+				Clients[i]->Addr.sin_addr.S_un.S_addr == Message.FromAddr.sin_addr.S_un.S_addr
 				&&
-				This->Clients[i]->Addr.sin_port == Message.FromAddr.sin_port
+				Clients[i]->Addr.sin_port == Message.FromAddr.sin_port
 				)
 			{
-				Message.Client = This->Clients[i];
+				Message.Client = Clients[i];
 				Message.Client->TimeToLastRecv = 0;
 				break;
 			}
 		}
 		if (Message.Header.Const != 'UD')
 		{
-			if (This->StunResponseWaited)
+			if (StunResponseWaited)
 			{
-				This->StunResponseRecved = true;
-				This->StunResponseCond.notify_one();
+				StunResponseRecved = true;
+				StunResponseCond.notify_one();
 			}
 			else
 			{
-				recvfrom(This->Socket, NULL, 0, 0, NULL, NULL);
+				recvfrom(Socket, NULL, 0, 0, NULL, NULL);
 			}
 			continue;
 		}
 		if (Message.Header.NetType == Confirm)
 		{
-			recvfrom(This->Socket, NULL, 0, 0, NULL, NULL);
-			This->ConfirmRecvProc(&Message);
+			recvfrom(Socket, NULL, 0, 0, NULL, NULL);
+			ConfirmRecvProc(&Message);
 			continue;
 		}
 		Message.Array->Recreate(Message.Header.Length);
-		recvfrom(This->Socket, (char*) Message.Array->Array, Message.Header.Length, 0, (sockaddr*) &Message.FromAddr, &SockaddrSize);
+		recvfrom(Socket, (char*) Message.Array->Array, Message.Header.Length, 0, (sockaddr*) &Message.FromAddr, &SockaddrSize);
 		if (Message.Header.NetType == Nec)
 		{
-			This->SendConfirm(Message.Header.Number, &Message.FromAddr);
+			SendConfirm(Message.Header.Number, &Message.FromAddr);
 		}
 
-		RecvProc* RecvProc = This->RecvProcsManager.Get(Message.Header.Type);
+		RecvProc* RecvProc = RecvProcs[Message.Header.Type];
 		while (RecvProc != NULL)
 		{
 			if (RecvProc->ForClientsOnly && Message.Client == NULL) break;
@@ -153,21 +184,18 @@ void Server::MainRecvProc(Server* This)
 		}
 	}
 }
-void Server::ClientsConnectCheckProc(Server* This)
+void Server::ClientsConnectCheckProc()
 {
 	while (true)
 	{
-		for (int i = 0; i < This->ClientsCount; i++)
+		for (int i = 0; i < 256; i++)
 		{
-			if (This->Clients[i] != NULL)
+			if (Clients[i] != NULL)
 			{
-				This->Clients[i]->TimeToLastRecv++;
-				if (This->Clients[i]->TimeToLastRecv >= 1000)
+				Clients[i]->TimeToLastRecv++;
+				if (Clients[i]->TimeToLastRecv >= 1000)
 				{
-					/*cout << "Client [" << i << "] disconnected." << std::endl;
-					delete This->Clients[i];
-					This->Clients[i] = NULL;*/
-					This->DeleteClient(This->Clients[i]);
+					DeleteClient(Clients[i]);
 				}
 			}
 		}
@@ -181,9 +209,14 @@ void Server::Bind(char* IP, USHORT Port)
 }
 void Server::StartRecv()
 {
-	RecvThread = new thread(MainRecvProc, this);
-	ClientsConnectCheckThread = new thread(ClientsConnectCheckProc, this);
+	RecvThread = new thread(MainRecvProc);
+	RecvThread->detach();
+
+	ClientsConnectCheckThread = new thread(ClientsConnectCheckProc);
 	ClientsConnectCheckThread->detach();
+
+	thread* NecResendThread = new thread(NecResendProc);
+	NecResendThread->detach();
 }
 void Server::Connect(char* IP, USHORT Port)
 {
@@ -192,11 +225,11 @@ void Server::Connect(char* IP, USHORT Port)
 }
 void Server::RegisterRecvProc(WORD Type, bool ForClientsOnly, function<bool(MessageInfo* Message)>& Proc)
 {
-	RecvProc* Last = RecvProcsManager.Get(Type);
+	RecvProc* Last = RecvProcs[Type];
 	if (Last == NULL)
 	{
 		Last = new RecvProc();
-		RecvProcsManager.Place(Type, Last);
+		RecvProcs[Type] = Last;
 	}
 	else
 	{
@@ -236,7 +269,7 @@ sockaddr_in Server::GetSelfAddr(char* StunIP, USHORT StunPort)
 	auto RecvFunc = [&]()->void
 	{
 		StunMessageHeader MessageHeader;
-		BytesArray Message = *NewArray(Sizeof(MessageHeader));
+		BytesArray Message = *BytesArray::New(Sizeof(MessageHeader));
 		unique_lock<mutex> Lock(RecvMutex);
 		while (!StunResponseRecved)
 		{
@@ -246,10 +279,9 @@ sockaddr_in Server::GetSelfAddr(char* StunIP, USHORT StunPort)
 		recvfrom(Socket, (char*) Message.Array, Sizeof(MessageHeader), MSG_PEEK, (sockaddr*) NULL, NULL);
 		Message.Deserialize(MessageHeader);
 		Message.Recreate(MessageHeader.Length + Sizeof(MessageHeader));
-		//Message = *NewArray(MessageHeader.Length + Sizeof(MessageHeader));
 		recvfrom(Socket, (char*) Message.Array, MessageHeader.Length + sizeof MessageHeader, 0, (sockaddr*) NULL, NULL);
 		StunResponseWaited = false;
-		Message.Deserialize(MessageHeader);
+		//Message.Deserialize(MessageHeader);
 		ZeroMemory(&(SelfAddr.sin_zero), sizeof SelfAddr.sin_zero);
 		while (Message.Pointer < Message.Size)
 		{
@@ -276,10 +308,42 @@ sockaddr_in Server::GetSelfAddr(char* StunIP, USHORT StunPort)
 	thread Thread(RecvFunc);
 	Thread.join();
 	SelfAddr.sin_addr.S_un.S_addr = ntohl(SelfAddr.sin_addr.S_un.S_addr);
-	SelfAddr.sin_port = ntohs(SelfAddr.sin_port);
+	//SelfAddr.sin_port = ntohs(SelfAddr.sin_port);
 	return SelfAddr;
 }
-Server::~Server()
+void Server::DeleteClient(Client* Client)
 {
-	closesocket(Socket);
+	cout << "Client [" << (int) Client->ID << "] disconnected." << std::endl;
+	BYTE ID = Client->ID;
+	delete Client;
+	Clients[ID] = NULL;
 }
+
+
+RecvUnit<BaseUnit>::RecvUnit()
+{}
+std::map<UINT, RecvUnit<BaseUnit>*> RecvUnit<BaseUnit>::Manager;
+RecvUnit<BaseUnit>::~RecvUnit()
+{
+	Manager.erase(ID);
+}
+void RecvUnit<char>::Register(UINT& TypeID)
+{}
+UINT NextRecvType = MessagesTypes::DeleteUnit + 1;
+
+
+SendUnit<BaseUnit>::SendUnit()
+{
+	ID = NextID++;
+	Manager[ID] = this;
+}
+std::map<UINT, SendUnit<BaseUnit>*> SendUnit<BaseUnit>::Manager;
+UINT SendUnit<BaseUnit>::NextID = 0;
+SendUnit<BaseUnit>::~SendUnit()
+{
+	Manager.erase(ID);
+	Server::SendToAll(Nec, DeleteUnit, ID);
+}
+void SendUnit<char>::Register(UINT& TypeID)
+{}
+UINT NextSendType = MessagesTypes::DeleteUnit + 1;

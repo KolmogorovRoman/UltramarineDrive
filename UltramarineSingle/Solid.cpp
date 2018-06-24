@@ -1,11 +1,11 @@
 #include "Solid.h"
 
-Mask::Mask(LPCTSTR Maskname, int ACenterX, int ACenterY)
+Mask::Mask(std::string Maskname, int ACenterX, int ACenterY)
 {
 	Center.x = ACenterX;
 	Center.y = ACenterY;
 	AUX_RGBImageRec *mask;
-	mask = auxDIBImageLoad(Maskname);
+	mask = auxDIBImageLoadA(Maskname.c_str());
 	MaskSrc = NULL;
 	Angle = 0;
 
@@ -19,29 +19,6 @@ Mask::Mask(LPCTSTR Maskname, int ACenterX, int ACenterY)
 			Array[i] = 1;
 		if (mask->data[i * 3] == 0) Array[i] = 0;
 	}
-
-	//ToDo Chunks
-	/*ChunkWidth = ((Width + 15) / 16);
-	ChunkHeight = ((Height + 15) / 16);
-	ChunkSize = ChunkWidth*ChunkHeight;
-	ChunkArray = new BYTE[ChunkSize];
-	for (int i = 0; i < ChunkSize; i++)
-	{
-		ChunkArray[i] = 0;
-	}
-	for (int y = 0; y < Height; y++)
-	{
-		for (int x = 0; x < Width; x++)
-		{
-			ChunkArray[y / 16 * ChunkWidth + x / 16]++;
-		}
-	}
-	for (int i = 0; i < ChunkSize; i++)
-	{
-		if (ChunkArray[i] == 0) ChunkArray[i] = CH_EMPTY;
-		else if (ChunkArray[i] == 255) ChunkArray[i] = CH_FULLED;
-		else ChunkArray[i] = CH_MIXED;
-	}*/
 }
 Mask::Mask(Mask* OtherMask, double angle)
 {
@@ -71,7 +48,7 @@ Mask::Mask(Mask* OtherMask, double angle)
 
 		//dbg
 		/*glLoadIdentity();
-		glOrtho(-400, 400, -300, 300, 0, -100);
+		glOrtho(-MainCamera.Width/2, MainCamera.Width/2, -MainCamera.Height/2, MainCamera.Height/2, 0, -100);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glColor3f(1, 1, 0);
 		glBegin(GL_POINTS);*/
@@ -108,10 +85,10 @@ Mask::Mask(Mask* OtherMask, double angle)
 		/*ChunkWidth = ((Width + 15) / 16);
 		ChunkHeight = ((Height + 15) / 16);
 		ChunkSize = ChunkWidth*ChunkHeight;
-		ChunkArray = new BYTE[ChunkSize];
+		ChunksArray = new BYTE[ChunkSize];
 		for (int i = 0; i < ChunkSize; i++)
 		{
-			ChunkArray[i] = CH_NOCALC;
+			ChunksArray[i] = CH_NOCALC;
 		}*/
 	}
 	else
@@ -132,7 +109,7 @@ Mask::Mask(Mask* OtherMask, double angle)
 					x=i%Width;
 					y=i/Width;
 					glLoadIdentity();
-					glOrtho(-400, 400, -300, 300, -1, 1);
+					glOrtho(-MainCamera.Width/2, MainCamera.Width/2, -MainCamera.Height/2, MainCamera.Height/2, -1, 1);
 					glTranslatef(0, 0, 0);
 					glRotatef(0, 0, 0, 1);
 					glBindTexture(GL_TEXTURE_2D, 0);
@@ -145,18 +122,46 @@ Mask::Mask(Mask* OtherMask, double angle)
 		/*ChunkWidth = ((Width + 15) / 16);
 		ChunkHeight = ((Height + 15) / 16);
 		ChunkSize = ChunkWidth*ChunkHeight;*/
-		/*ChunkArray = new BYTE[ChunkSize];
+		/*ChunksArray = new BYTE[ChunkSize];
 		for (int i = 0; i < ChunkSize; i++)
 		{
-			ChunkArray[i] = CH_NOCALC;
+			ChunksArray[i] = CH_NOCALC;
 		}*/
+	}
+}
+void Mask::CalcChunks()
+{
+	ChunksWidth = ((Width + 15) / 16);
+	ChunksHeight = ((Height + 15) / 16);
+	ChunksArray = new BYTE[ChunksWidth*ChunksHeight];
+	for (int i = 0; i < ChunksWidth*ChunksHeight; i++)
+	{
+		ChunksArray[i] = 0;
+	}
+	for (int y = 0; y < Height; y++)
+	{
+		for (int x = 0; x < Width; x++)
+		{
+			if (Array[y*Width + x] == true)
+			{
+				//ChunksArray[y / 16 * ChunksWidth + x / 16]++;
+				if (++ChunksArray[y / 16 * ChunksWidth + x / 16] == 0)
+					ChunksArray[y / 16 * ChunksWidth + x / 16] = 255;
+			}
+		}
+	}
+	for (int i = 0; i < ChunksWidth*ChunksHeight; i++)
+	{
+		if (ChunksArray[i] == 0) ChunksArray[i] = CH_EMPTY;
+		else if (ChunksArray[i] == 255) ChunksArray[i] = CH_FULLED;
+		else ChunksArray[i] = CH_MIXED;
 	}
 }
 //BYTE Mask::CalcChunk(int x, int y)
 //{
 //	int cx = x / CHUNK_SIZE, cy = y / CHUNK_SIZE;
 //	int i = cy*ChunkWidth + cx;
-//	if (ChunkArray[i] != CH_NOCALC) return ChunkArray[i];
+//	if (ChunksArray[i] != CH_NOCALC) return ChunksArray[i];
 //	//if (cx < ChunkWidth && cx < ChunkWidth)
 //	bool *OtherArray = MaskSrc->Array;
 //	int* xcos = new int[CHUNK_SIZE];
@@ -191,11 +196,11 @@ Mask::Mask(Mask* OtherMask, double angle)
 //				Array[iy*Width + ix] = OtherArray[ysrc*SrcWidth + xsrc];
 //			else
 //				Array[iy*Width + ix] = 0;
-//			ChunkArray[i] += Array[iy*Width + ix];
+//			ChunksArray[i] += Array[iy*Width + ix];
 //		}
-//	if (ChunkArray[i] == 0) ChunkArray[i] = CH_EMPTY;
-//	else if (ChunkArray[i] == 255) ChunkArray[i] = CH_FULLED;
-//	else ChunkArray[i] = CH_MIXED;
+//	if (ChunksArray[i] == 0) ChunksArray[i] = CH_EMPTY;
+//	else if (ChunksArray[i] == 255) ChunksArray[i] = CH_FULLED;
+//	else ChunksArray[i] = CH_MIXED;
 //	delete[] xsin;
 //	delete[] xcos;
 //	delete[] ysin;
@@ -204,10 +209,10 @@ Mask::Mask(Mask* OtherMask, double angle)
 Mask::~Mask()
 {
 	delete[] Array;
-	//delete[] ChunkArray;
+	//delete[] ChunksArray;
 }
 
-SolidUnit::SolidUnit(Mask* Amask, int AType) :
+SolidUnit::SolidUnit(Mask* Amask, int AType):
 	PointUnit()
 {
 	Type = AType;
@@ -215,8 +220,7 @@ SolidUnit::SolidUnit(Mask* Amask, int AType) :
 	mask = new Mask(maskSrc, 0);
 }
 SolidUnit::SolidUnit()
-{
-}
+{}
 bool SolidUnit::PixelCheck(int x, int y)
 {
 	if (x < this->x - mask->Center.x || y < this->y - mask->Center.y || x >= this->x - mask->Center.x + mask->Width || y >= this->y - mask->Center.y + mask->Height)
@@ -273,7 +277,7 @@ ContMask::ContMask(Mask* MaskSrc)
 		/*if(Array[i]==1)
 		{
 			glLoadIdentity();
-			glOrtho(-400, 400, -300, 300, -1, 1);
+			glOrtho(-MainCamera.Width/2, MainCamera.Width/2, -MainCamera.Height/2, MainCamera.Height/2, -1, 1);
 			glBindTexture(GL_TEXTURE_2D, 0);
 			glColor3f(0, 1, 0);
 			glVertex3f(x, y, 0);
@@ -343,41 +347,64 @@ bool MaskCollCheck(Mask* Mask1, int x1, int y1, Mask* Mask2, int x2, int y2)
 		}
 	return false;
 }
-bool MaskCollCheck(Mask* Mask1, int x1, int y1, double Angle1, Mask* Mask2, int x2, int y2, double Angle2)
-{
-	return false;
-}
 
 bool Visible(int X1, int Y1, int X2, int Y2, Mask* Barrier, int BarX, int BarY)
 {
+	if (X1 == X2 && Y1 == Y2) return true;
+	bool GoingRight = X1 < X2;
+	bool GoingLeft = !GoingRight;
+	bool GoingUp = Y1 < Y2;
+	bool GoingDown = !GoingUp;
+	bool XDone = false;
+	bool YDone = false;
 	bool ret;
 	double angle;
+	double s, c;
 	int dir, len;
 	double x, y;
 	len = sqrt((X2 - X1)*(X2 - X1) + (Y2 - Y1)*(Y2 - Y1));
 	angle = AngleToPoint(X1, Y1, X2, Y2);
+	s = dsin(angle);
+	c = dcos(angle);
 	x = X1;
 	y = Y1;
-	/*glLoadIdentity();
-	glOrtho(-400, 400, -300, 300, -1, 1);
-	glBegin(GL_POINTS);*/
-	for (int i = 0; i < len; i += 1)
-	{
-		if (Barrier->Array[(int) (x + Barrier->Center.x - BarX) + Barrier->Width*((int) (y + Barrier->Center.y - BarY))] == true)
+	if (Barrier->ChunksArray == NULL)
+		for (int i = 0; i < len; i += 1)
 		{
-			/*glColor3f(1, 0, 0);
-			glVertex3f(x, y, 0);*/
+			if (Barrier->Array[(int) (x + Barrier->Center.x - BarX) + Barrier->Width*((int) (y + Barrier->Center.y - BarY))] == true)
+			{
+				return false;
+			}
+			x += c;
+			y += s;
+		}
+	else while (!(XDone || YDone))
+	{
+		int bx = (int) (x + Barrier->Center.x - BarX);
+		int by = (int) (y + Barrier->Center.y - BarY);
+		int cx = bx / 16;
+		int cy = by / 16;
+		if (Barrier->ChunksArray[cy*Barrier->ChunksWidth + cx] == CH_EMPTY)
+		{
+			x += c * 16;
+			y += s * 16;
+			XDone = (GoingRight && x >= X2) || (GoingLeft && x <= X2);
+			YDone = (GoingUp && y >= Y2) || (GoingDown && y <= Y2);
+			continue;
+		}
+		else if (Barrier->ChunksArray[cy*Barrier->ChunksWidth + cx] == CH_FULLED)
+		{
 			return false;
 		}
-		/*else
+		if (Barrier->Array[bx + Barrier->Width*by] == true)
 		{
-			glColor3f(0, 1, 0);
-			glVertex3f(x, y, 0);
-		}*/
-		x += dcos(angle);
-		y += dsin(angle);
+			return false;
+		}
+		x += c;
+		y += s;
+		XDone = (GoingRight && x >= X2) || (GoingLeft && x <= X2);
+		YDone = (GoingUp && y >= Y2) || (GoingDown && y <= Y2);
 	}
-	//glEnd();
 	return true;
 }
 bool Visible(int X, int Y, ContMask* Target, int TarX, int TarY, Mask* Barrier, int BarX, int BarY)
@@ -398,8 +425,12 @@ void AllCollCheck()
 {
 	ForEach(SolidUnit, Unit)
 	{
-		delete Unit->mask;
-		Unit->mask = new Mask(Unit->maskSrc, Unit->angle);
+		if (Unit->PrevAngle != Unit->angle)
+		{
+			delete Unit->mask;
+			Unit->mask = new Mask(Unit->maskSrc, Unit->angle);
+		}
+		Unit->PrevAngle = Unit->angle;
 	}
 	ForEach(SolidUnit, Unit)
 	{
