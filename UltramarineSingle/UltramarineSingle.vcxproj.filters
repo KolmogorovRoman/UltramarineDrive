@@ -31,6 +31,15 @@
     <Filter Include="Modules\Physic">
       <UniqueIdentifier>{687cbacf-aad7-4fbb-b46a-485f45a4ab18}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Modules\Serialization">
+      <UniqueIdentifier>{a2dfa6be-2aba-42a8-9219-d3c5aaae55b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Geometry">
+      <UniqueIdentifier>{5f365231-09b4-4e1c-a3b8-50927504e3fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Chat">
+      <UniqueIdentifier>{a8805bcf-0ab0-4ccb-819f-bab2a79242cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Physic.h">
@@ -60,6 +69,21 @@
     <ClInclude Include="Misc.h">
       <Filter>Modules\Misc</Filter>
     </ClInclude>
+    <ClInclude Include="TupleRec.h">
+      <Filter>Modules\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
+      <Filter>Modules\Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="Serialization.h">
+      <Filter>Modules\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="Geometry.h">
+      <Filter>Modules\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Chat.h">
+      <Filter>Modules\Chat</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Physic.cpp">
@@ -88,6 +112,18 @@
     </ClCompile>
     <ClCompile Include="Misc.cpp">
       <Filter>Modules\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>Modules\Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="Serialization.cpp">
+      <Filter>Modules\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Geometry.cpp">
+      <Filter>Modules\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Chat.cpp">
+      <Filter>Modules\Chat</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

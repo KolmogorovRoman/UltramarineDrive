@@ -3,6 +3,12 @@
 Controller Contr1;
 Syncronizer* Sync1;
 
+Layer* LowestLayer;
+Layer* InterfaceLayer;
+Layer* InterfaceBackLayer;
+
+Font* MainFont;
+
 void Control()
 {
 	GetCursorPos(&(Contr1.Mouse));
@@ -29,12 +35,7 @@ void Control()
 	}
 }
 
-Layer* LowestLayer;
-Layer* InterfaceLayer;
-Layer* InterfaceBackLayer;
-
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow)
-//int main()
 {
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
@@ -47,6 +48,7 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	InterfaceBackLayer = Layer::Lower(InterfaceLayer, true);
 
 	BeginDraw();
+	MainFont = new Font("Resources\\Font", "Font4");
 	InitLayers();
 	LoadImages();
 	LoadMasks();

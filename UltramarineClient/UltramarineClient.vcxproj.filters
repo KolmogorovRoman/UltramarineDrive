@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Файлы исходного кода">
-      <UniqueIdentifier>{c4a8ed12-6bcd-4370-b33c-3474dee5680e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{1a693eaf-cf6c-444c-8edb-4b337af7b5ef}</UniqueIdentifier>
     </Filter>
@@ -37,6 +34,12 @@
     <Filter Include="Modules\Physic">
       <UniqueIdentifier>{986c6283-95a6-494f-b817-034210df5db8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Modules\Serialization">
+      <UniqueIdentifier>{8052a9b8-85f3-4ae5-9e9a-a277add3cff9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Geometry">
+      <UniqueIdentifier>{a600b19b-4a6d-40cd-9eea-a2d6c0a5d62f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Drive.h">
@@ -66,14 +69,20 @@
     <ClInclude Include="..\UltramarineSingle\Physic.h">
       <Filter>Modules\Physic</Filter>
     </ClInclude>
-    <ClInclude Include="..\UltramarineServer\Serialization.h">
-      <Filter>Modules\Client</Filter>
-    </ClInclude>
     <ClInclude Include="..\UltramarineSingle\Solid.h">
       <Filter>Modules\Solid</Filter>
     </ClInclude>
     <ClInclude Include="..\UltramarineSingle\SolidPhysic.h">
       <Filter>Modules\SolidPhysic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Serialization.h">
+      <Filter>Modules\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Font.h">
+      <Filter>Modules\Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Geometry.h">
+      <Filter>Modules\Geometry</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -81,9 +90,6 @@
       <Filter>Modules\Client</Filter>
     </ClCompile>
     <ClCompile Include="..\UltramarineServer\NetProtocols.cpp">
-      <Filter>Modules\Client</Filter>
-    </ClCompile>
-    <ClCompile Include="..\UltramarineServer\Serialization.cpp">
       <Filter>Modules\Client</Filter>
     </ClCompile>
     <ClCompile Include="..\UltramarineSingle\Console.cpp">
@@ -112,6 +118,15 @@
     </ClCompile>
     <ClCompile Include="..\UltramarineSingle\SolidPhysic.cpp">
       <Filter>Modules\SolidPhysic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Serialization.cpp">
+      <Filter>Modules\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Font.cpp">
+      <Filter>Modules\Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Geometry.cpp">
+      <Filter>Modules\Geometry</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

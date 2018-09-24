@@ -6,11 +6,14 @@ thread_local SerializingStage CurrentStage;
 const WORD BytesOrderConst = 0x5544;
 
 BytesArray::BytesArray()
-{}
-BytesArray::BytesArray(BytesArray& Other):
+{
+	Reverse = !IsBigEndian();
+}
+BytesArray::BytesArray(BytesArray& Other) :
 	Size(Other.Size),
 	Array(Other.Array),
-	Pointer(Other.Pointer)
+	Pointer(Other.Pointer),
+	Reverse(Other.Reverse)
 {}
 BytesArray* BytesArray::New(UINT Size)
 {
@@ -24,8 +27,8 @@ BytesArray* BytesArray::New(UINT Size, void* Pointer)
 	BytesArray* Array = new BytesArray;
 	Array->Size = Size;
 	Array->Array = new BYTE[Array->Size];
-	return Array;
 	memcpy(Array->Array, Pointer, Size);
+	return Array;
 }
 void BytesArray::Recreate(UINT Size)
 {
@@ -61,7 +64,7 @@ void IncSize(UINT Size)
 }
 void WriteBytes(const void* Source, UINT Size)
 {
-	if (*((BYTE*) &(BytesOrderConst)) == 0x55)
+	if (!CurrentArray->Reverse)
 	{
 		memcpy(&(CurrentArray->Array[CurrentArray->Pointer]), Source, Size);
 	}
@@ -72,7 +75,7 @@ void WriteBytes(const void* Source, UINT Size)
 }
 void ReadBytes(void* Dest, UINT Size)
 {
-	if (*((BYTE*) &(BytesOrderConst)) == 0x55)
+	if (!CurrentArray->Reverse)
 		memcpy(Dest, &CurrentArray->Array[CurrentArray->Pointer], Size);
 	else
 		for (int i = 0, j = Size - 1; i < Size; i++, j--)
@@ -99,7 +102,7 @@ void Serialize(T*& str) \
 	} \
 }
 DEF_SERIALIZE_FOR_STRING(char)
-void Serialize(std::string& Val)
+void Serialize(string& Val)
 {
 	if (SizeCalculation) IncSize(sizeof(Val.size()) + Val.size() * sizeof(char));
 	if (Serialazing)
@@ -130,4 +133,13 @@ void VoidBytes::Serialize()
 	{
 		MovePointer(Size);
 	}
+}
+
+bool IsLittleEndian()
+{
+	return *((BYTE*) &(BytesOrderConst)) == 0x44;
+}
+bool IsBigEndian()
+{
+	return *((BYTE*) &(BytesOrderConst)) == 0x55;
 }

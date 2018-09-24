@@ -4,7 +4,6 @@ HDC hdc;
 HGLRC  hRC;
 HWND hWnd;
 GLuint textures[IMAGECOUNT];
-Text* TextStd;
 mutex Mutex;
 CRITICAL_SECTION cs;
 condition_variable Cond;
@@ -16,23 +15,23 @@ bool Closed = false;
 bool NeedFullscreen = false;
 bool NeedWindowed = false;
 
-void DrawLine(int x1, int y1, int x2, int y2, Layer* layer, double R, double G, double B, double A)
+void DrawLine(double x1, double y1, double x2, double y2, Layer* layer, double R, double G, double B, double A)
 {
-	layer->Add(new LineExemplar(x1, y1, x2, y2, R, G, B, A));
+	layer->Add(*(new LineExemplar(x1, y1, x2, y2, R, G, B, A)));
 }
-void DrawRect(int x1, int y1, int x2, int y2, bool Filled, Layer* layer, double R, double G, double B, double A)
+void DrawRect(double x1, double y1, double x2, double y2, bool Filled, Layer* layer, double R, double G, double B, double A)
 {
-	layer->Add(new RectExemplar(x1, y1, x2, y2, Filled, R, G, B, A));
+	layer->Add(*(new RectExemplar(x1, y1, x2, y2, Filled, R, G, B, A)));
 }
 void DrawBezier(Vector P1, Vector P2, Vector P3, Vector P4, Layer* layer, double R = 0, double G = 0, double B = 0, double A = 0)
 {
-	layer->Add(new BezierExemplar(P1, P2, P3, P4, R, G, B, A));
+	layer->Add(*(new BezierExemplar(P1, P2, P3, P4, R, G, B, A)));
 }
 
 LineExemplar::LineExemplar(double x1, double y1, double x2, double y2, double R, double G, double B, double A):
 	x1(x1), y1(y1), x2(x2), y2(y2), R(R), G(G), B(B), A(A)
 {}
-void LineExemplar::Draw()
+void LineExemplar::operator()()
 {
 	glPushMatrix();
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -45,19 +44,21 @@ void LineExemplar::Draw()
 }
 
 RectExemplar::RectExemplar(double x1, double y1, double x2, double y2, bool Filled, double R, double G, double B, double A):
-	x1(x1), y1(y1), x2(x2), y2(y2), Filled(Filled), R(R), G(G), B(B), A(A)
+	x1(ceil(min(x1, x2))), y1(ceil(min(y1, y2))),
+	x2(floor(max(x1, x2))), y2(floor(max(y1, y2))),
+	Filled(Filled), R(R), G(G), B(B), A(A)
 {}
-void RectExemplar::Draw()
+void RectExemplar::operator()()
 {
 	glPushMatrix();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glColor4f(R, G, B, A);
-	if (Filled) glBegin(GL_QUADS);
+	if (Filled) glBegin(GL_POLYGON);
 	else glBegin(GL_LINE_LOOP);
-	glVertex3f(x1 + 0.5, y1 + 0.5, 0);
-	glVertex3f(x2 + 0.5, y1 + 0.5, 0);
-	glVertex3f(x2 + 0.5, y2 + 0.5, 0);
-	glVertex3f(x1 + 0.5, y2 + 0.5, 0);
+	glVertex2d(x1 + 0.5, y1 + 0.5);
+	glVertex2d(x2 + 0.5, y1 + 0.5);
+	glVertex2d(x2 + 0.5, y2 + 0.5);
+	glVertex2d(x1 + 0.5, y2 + 0.5);
 	glEnd();
 	glPopMatrix();
 }
@@ -71,7 +72,7 @@ ImageExemplar::ImageExemplar(Image* image, double x, double y, double angle, dou
 	hScale(hScale),
 	OverScreen(OverScreen)
 {}
-void ImageExemplar::Draw()
+void ImageExemplar::operator()()
 {
 	glPushMatrix();
 	glTranslatef(x, y, 0);
@@ -87,50 +88,10 @@ void ImageExemplar::Draw()
 	glPopMatrix();
 }
 
-TextExemplar::TextExemplar(Text* text, string String, double x, double y, bool Center):
-	text(text),
-	x(x),
-	y(y),
-	Center(Center),
-	String(String)
-{
-	int TotalWidth = 0;
-	int Len = String.length();
-	for (int i = 0; i < Len; i += 1)
-	{
-		TotalWidth += text->Symbols[String[i]].Width;
-	}
-	if (Center) this->x -= TotalWidth / 2;
-}
-void TextExemplar::Draw()
-{
-	int cx = 0;
-	int Len = String.length();
-	if (!Center)
-		for (int i = 0; i < Len; i += 1)
-		{
-			text->DrawSymbol(String[i], x + cx, y, Center);
-			cx += text->Symbols[String[i]].Width;
-		}
-	else
-	{
-		for (int i = 0; i < Len; i += 1)
-		{
-			cx += text->Symbols[String[i]].Width / 2;
-			text->DrawSymbol(String[i], x + cx, y, Center);
-			cx += text->Symbols[String[i]].Width / 2;
-		}
-	}
-}
-TextExemplar::~TextExemplar()
-{
-	//delete[] String;
-}
-
 BezierExemplar::BezierExemplar(Vector P1, Vector P2, Vector P3, Vector P4, double R, double G, double B, double A):
 	P1(P1), P2(P2), P3(P3), P4(P4), R(R), G(G), B(B), A(A)
 {}
-void BezierExemplar::Draw()
+void BezierExemplar::operator()()
 {
 	glColor4d(R, G, B, A);
 	glBegin(GL_LINE_STRIP);
@@ -234,7 +195,7 @@ Image::Image(string Name)
 }
 void Image::Draw(double x, double y, Layer* layer, double angle, double wScale, double hScale, bool OverScreen)
 {
-	layer->Add(new ImageExemplar(this, x, y, angle, wScale, hScale, OverScreen));
+	layer->Add(*(new ImageExemplar(this, x, y, angle, wScale, hScale, OverScreen)));
 }
 Image::~Image()
 {
@@ -266,136 +227,40 @@ AnimatedImage::~AnimatedImage()
 	delete[] ImagesTime;
 }
 
-Text::Text(LPCWSTR FontFileBMP, int ASymbolsCount, int AChWidth, int AChHeight)
-{
-	SymbolsCount = ASymbolsCount;
-	ChWidth = AChWidth;
-	ChHeight = AChHeight;
-	Font = auxDIBImageLoad(FontFileBMP);
-	Width = Font->sizeX;
-	Height = Font->sizeY;
-	int i1 = 0;
-	Data = new GLubyte[Width*Height * 4];
-	for (int i = 0; i < Width*Height; i += 1)
-	{
-		Data[i * 4 + 3] = 255;
-
-		if (Font->data[i1 * 3 + 0] == 0 && Font->data[i1 * 3 + 1] == 255 && Font->data[i1 * 3 + 2] == 0)
-		{
-			Data[i * 4 + 0] = 0; Data[i * 4 + 1] = 255; Data[i * 4 + 2] = 0; Data[i * 4 + 3] = 0;
-		}
-		else if (Font->data[i1 * 3 + 0] == 255 && Font->data[i1 * 3 + 1] == 0 && Font->data[i1 * 3 + 2] == 0)
-		{
-			Data[i * 4 + 0] = 255; Data[i * 4 + 1] = 0; Data[i * 4 + 2] = 0;
-		}
-		else if (Font->data[i1 * 3 + 0] == 0 && Font->data[i1 * 3 + 1] == 0 && Font->data[i1 * 3 + 2] == 255)
-			Data[i * 4 + 3] = 0;
-		else
-		{
-			Data[i * 4 + 0] = Font->data[i1 * 3 + 0]; Data[i * 4 + 1] = Font->data[i1 * 3 + 1]; Data[i * 4 + 2] = Font->data[i1 * 3 + 2];
-		}
-		i1 += 1;
-	}
-	glGenTextures(1, &FontTexture);
-	glBindTexture(GL_TEXTURE_2D, FontTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, 4, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
-	Symbols = new Symbol[SymbolsCount];
-	for (WCHAR i = 0; i < SymbolsCount; i += 1)
-	{
-		Symbols[i].x = (i*ChWidth) % Width;
-		Symbols[i].y = Height - (i*ChWidth) / (Width)*ChWidth - ChHeight;
-		Symbols[i].Height = ChHeight;
-		Symbols[i].Width = 0;
-		while (Data[((Symbols[i].y + 1)*Width + Symbols[i].x + Symbols[i].Width) * 4] != 255)
-			Symbols[i].Width += 1;
-		Symbols[i].Symb = i;
-	}
-}
-void Text::DrawSymbol(UCHAR Symb, int x, int y, bool Center)
-{
-	if (!Center)
-	{
-		x += Symbols[Symb].Width / 2.0;
-		y += Symbols[Symb].Height / 2.0;
-	}
-	glPushMatrix();
-	glTranslatef(x, y, 0);
-	if (Symb != 'a')
-	{
-		glBindTexture(GL_TEXTURE_2D, FontTexture);
-		glColor3f(1, 1, 1);
-		glBegin(GL_QUADS);
-
-		glTexCoord2d((Symbols[Symb].x + 0.0) / Width, (Symbols[Symb].y + 0.0) / Height);
-		glVertex3f(-Symbols[Symb].Width / 2.0, -Symbols[Symb].Height / 2.0, 0);
-
-		glTexCoord2d((Symbols[Symb].x + 0.0) / Width, (Symbols[Symb].y + Symbols[Symb].Height + 0.0) / Height);
-		glVertex3f(-Symbols[Symb].Width / 2.0, Symbols[Symb].Height / 2.0, 0);
-
-		glTexCoord2d((Symbols[Symb].x + Symbols[Symb].Width - 0.0) / Width, (Symbols[Symb].y + Symbols[Symb].Height + 0.0) / Height);
-		glVertex3f(Symbols[Symb].Width / 2.0, Symbols[Symb].Height / 2.0, 0);
-
-		glTexCoord2d((Symbols[Symb].x + Symbols[Symb].Width - 0.0) / Width, (Symbols[Symb].y + 0.0) / Height);
-		glVertex3f(Symbols[Symb].Width / 2.0, -Symbols[Symb].Height / 2.0, 0);
-
-		glEnd();
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-	else
-	{
-		/*glColor3f(1, 1, 1);
-		glBegin(GL_LINE_STRIP);
-		glVertex2d(-5, -5);
-		glVertex2d(0, 5);
-		glVertex2d(5, -5);
-		glEnd();
-		glBegin(GL_LINE_STRIP);
-		glVertex2d(-2.5, 0);
-		glVertex2d(2.5, 0);
-		glEnd();*/
-
-		glEnable(GL_LINE_SMOOTH);
-		(new BezierExemplar({-3, 0}, {-3, -6}, {3, -6}, {3, 0}, 1, 1, 1, 1))->Draw();
-		(new BezierExemplar({-3, 0}, {-3, 4}, {3, 4}, {3, 0}, 1, 1, 1, 1))->Draw();
-		(new BezierExemplar({4, 4}, {4, -6}, {4, -6}, {7, -6}, 1, 1, 1, 1))->Draw();
-		//(new LineExemplar(-2.5, 0, 2.5, 0, 1, 1, 1))->Draw();
-		glDisable(GL_LINE_SMOOTH);
-	}
-	glPopMatrix();
-}
-void Text::Draw(string String, int x, int y, Layer* layer, bool Center)
-{
-	layer->Add(new TextExemplar(this, String, x, y, Center));
-}
-
 std::list<Layer*> Layer::LayersList;
+Layer::Layer(bool IsInterface):
+	IsInterface(IsInterface)
+{
+	//typedef void(__stdcall *GL_GEN_FRAMEBUFFERS) (GLsizei, GLuint*);
+	//GL_GEN_FRAMEBUFFERS glGenFramebuffers = (GL_GEN_FRAMEBUFFERS)wglGetProcAddress("glGenFramebuffers");
+	//typedef void(__stdcall *GL_BIND_FRAMEBUFFER) (GLenum target, GLuint framebuffer);
+	//GL_BIND_FRAMEBUFFER glBindFramebuffer = (GL_BIND_FRAMEBUFFER)wglGetProcAddress("glBindFramebuffer");
+	//glGenFramebuffers(1, &FrameBuffer);
+	//glBindFramebuffer(36160, FrameBuffer); //36160 is GL_FRAMEBUFFER
+	//glGenTextures(1, &Texture);
+	//glBindTexture(GL_TEXTURE_2D, Texture);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, MainCamera.Width, MainCamera.Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
 Layer* Layer::New(bool IsInterface)
 {
-	Layer* NewLayer = new Layer();
-	NewLayer->IsInterface = IsInterface;
+	Layer* NewLayer = new Layer(IsInterface);
 	LayersList.push_back(NewLayer);
 	NewLayer->Iterator = std::prev(LayersList.end());
 	return NewLayer;
 }
 Layer* Layer::Higher(Layer* Other, bool IsInterface)
 {
-	Layer* NewLayer = new Layer();
-	NewLayer->IsInterface = IsInterface;
+	Layer* NewLayer = new Layer(IsInterface);
 	NewLayer->Iterator = LayersList.insert(std::next(Other->Iterator), NewLayer);
 	return NewLayer;
 }
 Layer* Layer::Lower(Layer* Other, bool IsInterface)
 {
-	Layer* NewLayer = new Layer();
-	NewLayer->IsInterface = IsInterface;
+	Layer* NewLayer = new Layer(IsInterface);
 	NewLayer->Iterator = LayersList.insert(Other->Iterator, NewLayer);
 	return NewLayer;
-}
-void Layer::Add(Exemplar* exemplar)
-{
-	Content.push_back(exemplar);
 }
 
 GraphicUnit::GraphicUnit(Image* image, Layer* layer):
@@ -451,6 +316,7 @@ AnimatedGraphicUnit::~AnimatedGraphicUnit()
 {}
 
 Camera MainCamera;
+extern void CameraChanged();
 
 void InitGraphic(HINSTANCE hInst, int nCmdShow, LPCWSTR WindowCaption)
 {
@@ -641,8 +507,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			for (auto Primitive : layer->Content)
 			{
-				Primitive->Draw();
-				delete Primitive;
+				//Primitive->Draw();
+				(*Primitive)();
+				//delete Primitive;
 			}
 			if (layer->IsInterface)
 			{
@@ -674,6 +541,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		MainCamera.Width = LOWORD(lParam);
 		MainCamera.Height = HIWORD(lParam);
+		CameraChanged();
 	}
 	else
 		return DefWindowProc(hwnd, uMsg, wParam, lParam);

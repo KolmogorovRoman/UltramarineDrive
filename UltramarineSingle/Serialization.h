@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <type_traits>
 #include <string>
+using namespace std;
 
 struct VoidBytes;
 struct BytesArray;
@@ -35,30 +36,31 @@ template <typename... Types> UINT Sizeof(Types&&... Vals)
 }
 
 template <typename T>
-typename std::enable_if<std::is_base_of<Serialazable, T>::value>::type Serialize(T& Val)
+typename enable_if<is_base_of<Serialazable, T>::value>::type Serialize(T& Val)
 {
 	Val.Serialize();
 }
 template <typename T>
-typename std::enable_if<!std::is_base_of<Serialazable, T>::value>::type Serialize(T& Val)
+typename enable_if<!is_base_of<Serialazable, T>::value>::type Serialize(T& Val)
 {
 	if (SizeCalculation) IncSize(sizeof Val);
 	if (Serialazing) WriteBytes(&Val, sizeof Val);
 	if (Deserialazing) ReadBytes(&Val, sizeof Val);
 }
-#define DECL_SERIALIZE_FOR_STRING(T) \
-void Serialize(T*& Val);
+#define DECL_SERIALIZE_FOR_STRING(T) void Serialize(T*& Val);
 DECL_SERIALIZE_FOR_STRING(char)
-void Serialize(std::string& Val);
+void Serialize(string& Val);
 
 struct BytesArray
 {
 	UINT Size = 0;
 	BYTE* Array = NULL;
 	UINT Pointer = 0;
+	bool Reverse;
 	BytesArray();
 	BytesArray(BytesArray& Other);
-	template <typename... Types> BytesArray(Types&&... Vals)
+	template <typename... Types> BytesArray(Types&&... Vals):
+		BytesArray()
 	{
 		CurrentArray = this;
 		CurrentStage = SerializingStage::GetSize;
@@ -112,3 +114,6 @@ struct VoidBytes:Serialazable
 	{}
 	void Serialize();
 };
+
+bool IsLittleEndian();
+bool IsBigEndian();

@@ -9,14 +9,16 @@ class Player;
 class Plane;
 class Explosive;
 class TankController;
+class Apache;
+class Atgm;
 
 #include "Drive.h"
+#include "Chat.h"
 using namespace std;
 
 extern Controller Contr1;
 extern HINSTANCE hInst;
 extern RECT RectInScreen;
-extern Console* GameConsole;
 
 void GameInit();
 
@@ -44,11 +46,6 @@ public:
 	GraphicUnit* Tower;
 	Player* player;
 	int UserID;
-	int KeyForward;
-	int KeyBack;
-	int KeyRight;
-	int KeyLeft;
-	int KeyFire;
 	int HitPoints;
 	int FireReady;
 	string NickName;
@@ -56,13 +53,14 @@ public:
 	double TowerAngle;
 	double TowerSpeed;
 	Tank(PointUnit Point, Player* player, TankController* Contr, string NickName);
-	void SteepProc();
-	void CollProc(SolidUnit* Other);
-	void DrawProc();
+	void SteepProc() override;
+	void CollProc(SolidUnit* Other) override;
+	void DrawProc() override;
 	void Die();
 	ContMask* contmask;
 	~Tank();
 };
+stringstream& operator >> (stringstream& stream, Tank*& tank);
 class Map:
 	public ManagedUnit<Map>,
 	public GraphicUnit,
@@ -90,6 +88,7 @@ class Player:
 {
 public:
 	string NickName;
+	int Team;
 	TankController* Contr;
 	Tank* tank;
 	int SpawnPointIndex = -1;
@@ -102,6 +101,7 @@ public:
 	int KillsCount;
 	int DeathsCount;
 };
+stringstream& operator >> (stringstream& stream, Player*& tank);
 class Bot:
 	public ManagedUnit<Bot>,
 	public Player,
@@ -173,4 +173,37 @@ public:
 	TankController();
 	TankController(Controller* Contr, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyFireCode, int KeyPlaneCode);
 	void Check();
+};
+class Apache:
+	public ManagedUnit<Apache>,
+	public GraphicUnit,
+	public SteepProcedUnit
+{
+public:
+	GraphicUnit* Helix;
+	double HelixVelosity = 0;
+	Controller* Contr;
+	double ForwardSpeed = 1.8;
+	double Velosity = 1.5;
+	Player* Target = NULL;
+	double a = 90;
+	double b = 90;
+	int FireReady = 0;
+	Apache(PointUnit Point, Controller* Contr);
+	void SteepProc() override;
+	void DrawProc() override;
+	~Apache();
+};
+class Atgm:
+	public ManagedUnit<Apache>,
+	public GraphicUnit,
+	public SteepProcedUnit
+{
+public:
+	int Time = 0;
+	Player* Target;
+	double Speed = 2;
+	double RotSpeed = 2;
+	Atgm(Player* Target, double x, double y, double angle);
+	void SteepProc() override;
 };

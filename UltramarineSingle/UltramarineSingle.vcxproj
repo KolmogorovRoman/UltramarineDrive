@@ -71,7 +71,6 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\Роман\Documents\Visual Studio 2015\Projects\UltramarineDrive\UltramarineSingle\include;$(IncludePath)</IncludePath>
     <CodeAnalysisRuleSet>MixedRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -151,24 +150,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Chat.h" />
     <ClInclude Include="Console.h" />
     <ClInclude Include="Drive.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Geometry.h" />
     <ClInclude Include="Graphic.h" />
     <ClInclude Include="Management.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="Physic.h" />
+    <ClInclude Include="Serialization.h" />
     <ClInclude Include="Solid.h" />
     <ClInclude Include="SolidPhysic.h" />
+    <ClInclude Include="TupleRec.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Chat.cpp" />
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="Drive.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Graphic.cpp" />
     <ClCompile Include="Management.cpp" />
     <ClCompile Include="Misc.cpp" />
     <ClCompile Include="Physic.cpp" />
+    <ClCompile Include="Serialization.cpp" />
     <ClCompile Include="Solid.cpp" />
     <ClCompile Include="SolidPhysic.cpp" />
   </ItemGroup>

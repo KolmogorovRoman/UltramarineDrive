@@ -34,6 +34,12 @@
     <Filter Include="Modules\Server">
       <UniqueIdentifier>{ec7e6603-eec3-4a4a-b12b-3783863dbdcf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Modules\Serialization">
+      <UniqueIdentifier>{2d072b40-3060-4875-9761-2a53b96f8671}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Geometry">
+      <UniqueIdentifier>{bee70122-7aba-4e4c-8af2-4e11b08a4c87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\UltramarineSingle\Console.cpp">
@@ -60,9 +66,6 @@
     <ClCompile Include="..\UltramarineSingle\Physic.cpp">
       <Filter>Modules\Physic</Filter>
     </ClCompile>
-    <ClCompile Include="Serialization.cpp">
-      <Filter>Modules\Server</Filter>
-    </ClCompile>
     <ClCompile Include="Server.cpp">
       <Filter>Modules\Server</Filter>
     </ClCompile>
@@ -71,6 +74,15 @@
     </ClCompile>
     <ClCompile Include="..\UltramarineSingle\SolidPhysic.cpp">
       <Filter>Modules\SolidPhysic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Serialization.cpp">
+      <Filter>Modules\Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Font.cpp">
+      <Filter>Modules\Graphic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\UltramarineSingle\Geometry.cpp">
+      <Filter>Modules\Geometry</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -104,11 +116,17 @@
     <ClInclude Include="NetProtocols.h">
       <Filter>Modules\Server</Filter>
     </ClInclude>
-    <ClInclude Include="Serialization.h">
-      <Filter>Modules\Server</Filter>
-    </ClInclude>
     <ClInclude Include="Server.h">
       <Filter>Modules\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Serialization.h">
+      <Filter>Modules\Serialization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Font.h">
+      <Filter>Modules\Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\UltramarineSingle\Geometry.h">
+      <Filter>Modules\Geometry</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

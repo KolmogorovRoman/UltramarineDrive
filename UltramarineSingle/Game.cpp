@@ -1,10 +1,7 @@
 #include "Game.h"
-#include <fstream>
-#include <tuple>
 
 HINSTANCE hInst;
 RECT RectInScreen;
-Console* GameConsole;
 
 Map* Map1;
 Image* TankBodyImage;
@@ -21,6 +18,11 @@ Image* PlaneImage;
 AnimatedImage* ExplosiveImage;
 Image* SightImage;
 AnimatedImage* PointerImage;
+Image* ApacheBodyImage;
+Image* ApacheHelixImage;
+Image* AtgmImage;
+AnimatedImage* AtgmTrackImage;
+Image* ApacheSightImage;
 
 Layer* MapLayer;
 Layer* TanksBodyLayer;
@@ -66,7 +68,7 @@ bool PhysCollTable[4][4] =
 #define OT_HEAL 3
 #define OT_EXPLOSIVE 4
 
-Bullet::Bullet(double x, double y, double angle, Player* ParPlayer) :
+Bullet::Bullet(double x, double y, double angle, Player* ParPlayer):
 	PointUnit(x, y, angle),
 	SolidUnit(BulletMask, OT_BULLET),
 	GraphicUnit(BulletImage, TanksBodyLayer),
@@ -77,10 +79,13 @@ void Bullet::SteepProc()
 	x += 15 * dcos(angle);
 	y += 15 * dsin(angle);
 	//angle += rand() % 7 - 3;
+	if (x<-Map1->image->RealWidth / 2 || x>Map1->image->RealWidth / 2 ||
+		y<-Map1->image->RealHeight / 2 || y>Map1->image->RealHeight / 2)
+		Delete();
 }
 void Bullet::CollProc(SolidUnit* Other)
 {
-	if (ParPlayer->tank != Other)
+	if (ParPlayer == NULL || ParPlayer->tank != Other)
 	{
 		Delete();
 		(new AnimatedGraphicUnit(HitImage, EffectsLayer, false))->SetPoint(x, y, 180 + angle);
@@ -89,7 +94,7 @@ void Bullet::CollProc(SolidUnit* Other)
 Bullet::~Bullet()
 {}
 
-Tank::Tank(PointUnit Point, Player* player, TankController* Contr, string NickName) :
+Tank::Tank(PointUnit Point, Player* player, TankController* Contr, string NickName):
 	PointUnit(Point),
 	GraphicUnit(TankBodyImage, TanksBodyLayer),
 	SolidPhysicUnit(TankMask, OT_TANK),
@@ -194,7 +199,7 @@ void Tank::CollProc(SolidUnit* Other)
 		HitPoints -= 3;
 	if (HitPoints <= 0)
 	{
-		if (Other->Type == OT_BULLET && ((Bullet*)Other)->ParPlayer != player)
+		if (Other->Type == OT_BULLET && ((Bullet*)Other)->ParPlayer != NULL && ((Bullet*)Other)->ParPlayer != player)
 		{
 			((Bullet*)Other)->ParPlayer->KillsCount++;
 		}
@@ -208,18 +213,24 @@ void Tank::DrawProc()
 	Tower->x = x;
 	Tower->y = y;
 	Tower->angle = angle + TowerAngle;
+	//NickName
+	MainFont->Draw(NickName, x, y + 50, LabelsLayer, true, true);
+	//HitPoints
 	DrawRect(x - 50, y - 50, x + 50, y - 45, 1, LabelsLayer, 1, 1, 1);
-	DrawRect(x - 50, y - 50, x + 100 * HitPoints / 5 - 50, y - 45, true, LabelsLayer, 1 - HitPoints / 5.0, HitPoints / 5.0, 0);
+	DrawRect(x - 50, y - 50, x + 100 * HitPoints / 5 - 50, y - 45, 1, LabelsLayer, 1 - HitPoints / 5.0, HitPoints / 5.0, 0);
 	DrawRect(x - 50, y - 50, x + 50, y - 45, false, LabelsLayer);
+
 	if (player == WathedPlayer)
 	{
+		//FireReady
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2, -MainCamera.Width / 2 + 100, -MainCamera.Height / 2 + 10, true, InterfaceLayer, 1, 1, 1);
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2, 100 * FireReady / 150 - MainCamera.Width / 2, -MainCamera.Height / 2 + 10, true, InterfaceLayer, 0.5, 0, 1);
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2, -MainCamera.Width / 2 + 100, -MainCamera.Height / 2 + 10, false, InterfaceLayer);
+		//HitPoints
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2 + 20, -MainCamera.Width / 2 + 100, -MainCamera.Height / 2 + 10, true, InterfaceLayer, 1, 1, 1);
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2 + 20, 100 * HitPoints / 5 - MainCamera.Width / 2, -MainCamera.Height / 2 + 10, true, InterfaceLayer, 1 - HitPoints / 5.0, HitPoints / 5.0, 0);
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2 + 20, -MainCamera.Width / 2 + 100, -MainCamera.Height / 2 + 10, false, InterfaceLayer, 0, 0, 0);
-
+		//Cursor
 		DrawRect(Contr->Mouse.x - 20, Contr->Mouse.y - 20, Contr->Mouse.x + 15, Contr->Mouse.y - 15, true, LabelsLayer, 1, 1, 1);
 		DrawRect(Contr->Mouse.x + 20, Contr->Mouse.y - 20, Contr->Mouse.x + 15, Contr->Mouse.y + 15, true, LabelsLayer, 1, 1, 1);
 		DrawRect(Contr->Mouse.x + 20, Contr->Mouse.y + 20, Contr->Mouse.x - 15, Contr->Mouse.y + 15, true, LabelsLayer, 1, 1, 1);
@@ -240,37 +251,36 @@ void Tank::DrawProc()
 		}
 		DrawRect(Contr->Mouse.x - 20, Contr->Mouse.y - 20, Contr->Mouse.x + 20, Contr->Mouse.y + 20, false, LabelsLayer);
 		DrawRect(Contr->Mouse.x - 15, Contr->Mouse.y - 15, Contr->Mouse.x + 15, Contr->Mouse.y + 15, false, LabelsLayer);
-		if (player->PlaneReady == 1)
+		//Sight
+		double CurrLaserLen = sqrt(Map1->image->Width*Map1->image->Width + Map1->image->Height*Map1->image->Height);
+		double Sin = dsin(angle + TowerAngle);
+		double Cos = dcos(angle + TowerAngle);
+		Vector Laser{ x + CurrLaserLen*Cos, y + CurrLaserLen*Sin };
+		ForEach(SolidUnit, Unit)
+		{
+			if ((BaseUnit*)Unit == (BaseUnit*)this) continue;
+			if (!CollTable[OT_BULLET][Unit->Type]) continue;
+			Vector CurrLaser = v(x, y);
+			for (int l = 0; l < CurrLaserLen; l++)
+			{
+				if (Unit->PixelCheck(CurrLaser.x, CurrLaser.y))
+				{
+					Laser = CurrLaser;
+					CurrLaserLen = CurrLaser.Len();
+					break;
+				}
+				CurrLaser.x += Cos;
+				CurrLaser.y += Sin;
+			}
+		}
+		//DrawLine(x, y, Laser.x, Laser.y, 97, 1, 0, 0, 0.7);
+		SightImage->Draw(Laser.x, Laser.y, LabelsLayer, angle + TowerAngle);
+		//Plane
+		if (player->PlaneReady)
 		{
 			PlaneImage->Draw(-MainCamera.Width / 2 + 50, -MainCamera.Height / 2 + 50, InterfaceLayer, 90, 0.5, 0.5, true);
 		}
-		//for (double i = -20; i <= 20; i+=0.2)
-		//{
-		Vector Laser = v(x, y);
-		double Sin = dsin(angle + TowerAngle);
-		double Cos = dcos(angle + TowerAngle);
-		for (int l = 0; l < sqrt(Map1->image->Width*Map1->image->Width + Map1->image->Height*Map1->image->Height); l++)
-		{
-			bool IsColl = false;
-			ForEach(SolidUnit, Unit)
-			{
-				if ((BaseUnit*)Unit == (BaseUnit*)this) continue;
-				if (!CollTable[OT_BULLET][Unit->Type]) continue;
-				if (Unit->PixelCheck(Laser.x, Laser.y)) IsColl = true;
-			}
-			if (IsColl)
-				break;
-			Laser.x += Cos;
-			Laser.y += Sin;
-		}
-		//DrawLine(x, y, Laser.x, Laser.y, 97, 1, 0, 0, 0.7);
-		/*DrawRect(Laser.x - 2, Laser.y - 2, Laser.x + 2, Laser.y + 2, true, 97, 1, 0, 0, 0.5);
-		DrawRect(Laser.x - 1, Laser.y - 3, Laser.x + 1, Laser.y + 3, true, 97, 1, 0, 0, 0.5);
-		DrawRect(Laser.x - 3, Laser.y - 1, Laser.x + 3, Laser.y + 2, true, 97, 1, 0, 0, 0.5);*/
-		SightImage->Draw(Laser.x, Laser.y, LabelsLayer, angle + TowerAngle);
 	}
-
-	TextStd->Draw(NickName, x, y + 50, LabelsLayer, 1);
 }
 void Tank::Die()
 {
@@ -287,8 +297,24 @@ Tank::~Tank()
 	delete contmask;
 	Tower->Delete();
 }
+stringstream & operator >> (stringstream & stream, Tank *& tank)
+{
+	string NickName;
+	stream >> NickName;
+	tank = NULL;
+	ForEach(Tank, t)
+	{
+		if (t->NickName == NickName)
+		{
+			tank = t;
+			break;
+		}
+	}
+	if (tank == NULL) throw "Tank not found"s;
+	return stream;
+}
 
-Map::Map(string MapDir) :
+Map::Map(string MapDir):
 	PointUnit(0, 0, 0),
 	GraphicUnit(new Image("Resources\\" + MapDir + "\\.bmp"), MapLayer),
 	SolidUnit(new Mask("Resources\\" + MapDir + "\\Coll_Mask.bmp", image->RealWidth / 2, image->RealHeight / 2), OT_MAP)
@@ -351,7 +377,7 @@ Map::Map(string MapDir) :
 	}
 }
 
-Player::Player(string NickName, TankController* Contr) :
+Player::Player(string NickName, TankController* Contr):
 	NickName(NickName),
 	Contr(Contr),
 	PlaneReady(false),
@@ -389,8 +415,24 @@ void Player::SpawnProc()
 		WathedPlayer = this;
 	}
 }
+stringstream& operator >> (stringstream& stream, Player*& player)
+{
+	string NickName;
+	stream >> NickName;
+	player = NULL;
+	ForEach(Player, p)
+	{
+		if (p->NickName == NickName)
+		{
+			player = p;
+			break;
+		}
+	}
+	if (player == NULL) throw "Player not found"s;
+	return stream;
+}
 
-Bot::Bot(string NickName) :
+Bot::Bot(string NickName):
 	Player(NickName, new TankController())
 {}
 void Bot::SteepProc()
@@ -408,7 +450,7 @@ void Bot::SteepProc()
 	bool TargetVisible = false;
 	ForEach(Tank, Unit)
 	{
-		if (tank == Unit) continue;
+		if (tank == Unit || Unit->player->Team == Team && Team != 0) continue;
 		if (Visible(tank->x, tank->y, Unit->x, Unit->y, Map1->mask, Map1->x, Map1->y))
 		{
 			if (!TargetVisible) MinDist = MAXINT;
@@ -426,6 +468,7 @@ void Bot::SteepProc()
 		int MinDist = MAXINT;
 		ForEach(Tank, Unit)
 		{
+			if (tank == Unit || Unit->player->Team == Team && Team != 0) continue;
 			if (Unit != tank && DistToPoint(tank->x, tank->y, Unit->x, Unit->y) < MinDist)
 			{
 				TargetTank = Unit;
@@ -529,7 +572,7 @@ void Bot::SpawnProc()
 	PathEnd = CurrentTargetPoint;
 }
 
-Box::Box(int x, int y) :
+Box::Box(int x, int y):
 	PointUnit(x, y, 0),
 	GraphicUnit(HealImage, TanksBodyLayer),
 	SolidPhysicUnit(HealMask, OT_HEAL)
@@ -543,7 +586,7 @@ void Box::CollProc(SolidUnit* Other)
 	}
 }
 
-Plane::Plane(int x, int y) :
+Plane::Plane(int x, int y):
 	GraphicUnit(PlaneImage, SkyLayer),
 	Time(0)
 {
@@ -569,7 +612,7 @@ void Plane::SteepProc()
 		Delete();
 }
 
-Explosive::Explosive(int x, int y) :
+Explosive::Explosive(int x, int y):
 	SolidUnit(ExplosiveMask, OT_EXPLOSIVE),
 	PointUnit(x, y, 0)
 {
@@ -580,7 +623,7 @@ void Explosive::SteepProc()
 	Delete();
 }
 
-TankController::TankController() :
+TankController::TankController():
 	Contr(NULL)
 {}
 TankController::TankController(Controller* Contr, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyFireCode, int KeyPlaneCode) :
@@ -604,6 +647,217 @@ void TankController::Check()
 	Mouse = Contr->Mouse;
 }
 
+Apache::Apache(PointUnit Point, Controller* Contr):
+	PointUnit(Point),
+	Contr(Contr),
+	GraphicUnit(ApacheBodyImage, LabelsLayer)
+{
+	Helix = new GraphicUnit(ApacheHelixImage, LabelsLayer);
+	Helix->SetPoint(x, y, angle);
+}
+void Apache::SteepProc()
+{
+	if (FireReady < 5)
+		FireReady++;
+	double MinDist;
+	MinDist = 150;
+	Target = NULL;
+	ForEach(Player, p)
+	{
+		if (p->tank == NULL) continue;
+		double d = DistToPoint(Contr->Mouse.x, Contr->Mouse.y, p->tank->x, p->tank->y);
+		if (d < MinDist)
+		{
+			Target = p;
+			MinDist = d;
+		}
+	}
+	double Angle = AnglesDiff(angle, AngleToPoint(x, y, Contr->Mouse.x, Contr->Mouse.y));
+	if (Angle > Velosity*HelixVelosity / 10)
+	{
+		angle -= Velosity*HelixVelosity / 10;
+	}
+	else if (Angle < -Velosity*HelixVelosity / 10)
+	{
+		angle += Velosity*HelixVelosity / 10;
+	}
+	else
+	{
+		angle = AngleToPoint(x, y, Contr->Mouse.x, Contr->Mouse.y);
+	}
+	if (Contr->Keys[VK_UP])
+	{
+		//x += ForwardSpeed*dcos(angle)*HelixVelosity / 10;
+		//y += ForwardSpeed*dsin(angle)*HelixVelosity / 10;
+		y += ForwardSpeed*HelixVelosity / 10;
+	}
+	if (Contr->Keys[VK_DOWN])
+	{
+		//x -= ForwardSpeed*dcos(angle)*HelixVelosity / 10;
+		//y -= ForwardSpeed*dsin(angle)*HelixVelosity / 10;
+		y -= ForwardSpeed*HelixVelosity / 10;
+	}
+	if (Contr->Keys[VK_RIGHT])
+	{
+		//x += ForwardSpeed*dcos(angle - 90)*HelixVelosity / 10;
+		//y += ForwardSpeed*dsin(angle - 90)*HelixVelosity / 10;
+		x += ForwardSpeed*HelixVelosity / 10;
+	}
+	if (Contr->Keys[VK_LEFT])
+	{
+		//x += ForwardSpeed*dcos(angle + 90)*HelixVelosity / 10;
+		//y += ForwardSpeed*dsin(angle + 90)*HelixVelosity / 10;
+		x -= ForwardSpeed*HelixVelosity / 10;
+	}
+	if (Contr->Keys[VK_SHIFT] && HelixVelosity < 20)
+	{
+		if (HelixVelosity != 10.0)
+			HelixVelosity += 0.1;
+		else if (Contr->Keys[VK_SHIFT] > 5)
+			HelixVelosity += 0.1;
+	}
+	if (Contr->Keys[VK_CONTROL] && HelixVelosity > 0)
+	{
+		HelixVelosity -= 0.1;
+	}
+	if (Contr->Keys[1] > 0 && FireReady >= 5)
+	{
+		double d = DistToPoint(x, y, Contr->Mouse.x, Contr->Mouse.y);
+		if (d < 200) d = 200;
+		double a = AngleToPoint(x + dcos(angle + b) * 30, y + dsin(angle + b) * 30, x + d*dcos(angle), y + d*dsin(angle));
+		new Bullet(x + dcos(angle + b) * 30, y + dsin(angle + b) * 30, a, NULL);
+		FireReady = 0;
+		b = -b;
+	}
+	if (Contr->Keys[2] == 1 && Target != NULL)
+	{
+		new Atgm(Target, x + dcos(angle + a) * 40, y + dsin(angle + a) * 40, angle);
+		a = -a;
+	}
+
+}
+void Apache::DrawProc()
+{
+	Helix->SetPoint(x, y, Helix->angle + HelixVelosity);
+	Helix->Draw();
+	MainFont->Draw(to_string(HelixVelosity), MainCamera.Width / 2 - 50, -MainCamera.Height / 2 + MainFont->Common.LineHeight, InterfaceLayer);
+	ApacheSightImage->Draw(Contr->Mouse.x, Contr->Mouse.y, LabelsLayer, 0);
+	if (Target != NULL && Target->tank != NULL)
+	{
+		double x = Target->tank->x;
+		double y = Target->tank->y;
+		double w = Target->tank->image->RealWidth / 2 + 5;
+		double h = Target->tank->image->RealHeight / 2 + 5;
+		POINT p = TurnedRectSize(w, h, Target->tank->angle);
+		w = p.x;
+		h = p.y;
+		DrawLine(x - w, y + h, x - 10, y + h, LabelsLayer);
+		DrawLine(x + 10, y + h, x + w, y + h, LabelsLayer);
+		DrawLine(x + w, y + h, x + w, y + 10, LabelsLayer);
+		DrawLine(x + w, y - 10, x + w, y - h, LabelsLayer);
+		DrawLine(x + w, y - h, x + 10, y - h, LabelsLayer);
+		DrawLine(x - 10, y - h, x - w, y - h, LabelsLayer);
+		DrawLine(x - w, y - h, x - w, y - 10, LabelsLayer);
+		DrawLine(x - w, y + 10, x - w, y + h, LabelsLayer);
+	}
+
+	/*double CurrLaserLen = sqrt(Map1->image->Width*Map1->image->Width + Map1->image->Height*Map1->image->Height);
+	double Sin = dsin(angle);
+	double Cos = dcos(angle);
+	Vector Laser{ x + CurrLaserLen*Cos + dcos(angle + 90) * 30, y + CurrLaserLen*Sin + dsin(angle + 90) * 30 };
+	ForEach(SolidUnit, Unit)
+	{
+		if ((BaseUnit*)Unit == (BaseUnit*)this) continue;
+		if (!CollTable[OT_BULLET][Unit->Type]) continue;
+		Vector CurrLaser = v(x + dcos(angle + 90) * 30, y + dsin(angle + 90) * 30);
+		for (int l = 0; l < CurrLaserLen; l++)
+		{
+			if (Unit->PixelCheck(CurrLaser.x, CurrLaser.y))
+			{
+				Laser = CurrLaser;
+				CurrLaserLen = CurrLaser.Len();
+				break;
+			}
+			CurrLaser.x += Cos;
+			CurrLaser.y += Sin;
+		}
+	}
+	SightImage->Draw(Laser.x, Laser.y, LabelsLayer, angle);
+
+	CurrLaserLen = sqrt(Map1->image->Width*Map1->image->Width + Map1->image->Height*Map1->image->Height);
+	Sin = dsin(angle);
+	Cos = dcos(angle);
+	Laser.x = x + CurrLaserLen*Cos + dcos(angle - 90) * 30;
+	Laser.y = y + CurrLaserLen*Sin + dsin(angle - 90) * 30;
+	ForEach(SolidUnit, Unit)
+	{
+		if ((BaseUnit*)Unit == (BaseUnit*)this) continue;
+		if (!CollTable[OT_BULLET][Unit->Type]) continue;
+		Vector CurrLaser = v(x - dcos(angle + 90) * 30, y - dsin(angle + 90) * 30);
+		for (int l = 0; l < CurrLaserLen; l++)
+		{
+			if (Unit->PixelCheck(CurrLaser.x, CurrLaser.y))
+			{
+				Laser = CurrLaser;
+				CurrLaserLen = CurrLaser.Len();
+				break;
+			}
+			CurrLaser.x += Cos;
+			CurrLaser.y += Sin;
+		}
+	}
+	SightImage->Draw(Laser.x, Laser.y, LabelsLayer, angle);*/
+
+}
+Apache::~Apache()
+{
+	Helix->Delete();
+}
+
+Atgm::Atgm(Player* Target, double x, double y, double angle):
+	Target(Target),
+	PointUnit(x, y, angle),
+	GraphicUnit(AtgmImage, LabelsLayer)
+{}
+void Atgm::SteepProc()
+{
+	Time++;
+	/*if (Time >= 500)
+	{
+		Delete();
+		return;
+	}*/
+	if (Speed < 5) Speed += 0.2;
+	if (Target != NULL && Target->tank != NULL)
+	{
+		if (DistToPoint(x, y, Target->tank->x, Target->tank->y) < 25)
+		{
+			new Explosive(x, y);
+			Delete();
+		}
+		double Angle = AnglesDiff(angle, AngleToPoint(x, y, Target->tank->x, Target->tank->y));
+		if (Angle > RotSpeed)
+		{
+			angle -= RotSpeed;
+			if (Speed > 5) Speed -= 0.1;
+		}
+		else if (Angle < -RotSpeed)
+		{
+			angle += RotSpeed;
+			if (Speed > 5) Speed -= 0.1;
+		}
+		else
+		{
+			angle = AngleToPoint(x, y, Target->tank->x, Target->tank->y);
+			if (Speed < 10) Speed += 0.2;
+			else if (Speed < 15) Speed += 0.1;
+		}
+	}
+	x += Speed * dcos(angle);
+	y += Speed * dsin(angle);
+	(new AnimatedGraphicUnit(AtgmTrackImage, EffectsLayer, false))->SetPoint(x, y, angle + rand() % 6 - 3);
+}
+
 void Draw()
 {
 	if (Contr1.Keys[VK_TAB] >= 1)
@@ -613,49 +867,49 @@ void Draw()
 		{
 			DrawRect(-125, -200, 125, 200, true, InterfaceBackLayer, 0.75, 0.75, 0.75, 0.5);
 			DrawRect(-125, -200, 125, 200, false, InterfaceLayer);
-			TextStd->Draw("NickName", -123, 171, InterfaceLayer, false);
+			MainFont->Draw("NickName", -125, 200, InterfaceLayer);
 			DrawLine(15, -200, 15, 200, InterfaceLayer);
-			TextStd->Draw("Kills", 17, 171, InterfaceLayer, false);
+			MainFont->Draw("Kills", 15, 200, InterfaceLayer);
 			DrawLine(65, -200, 65, 200, InterfaceLayer);
-			TextStd->Draw("Deaths", 67, 171, InterfaceLayer, false);
-			DrawLine(-125, 184, 125, 184, InterfaceLayer);
-			int i = 0;
+			MainFont->Draw("Deaths", 65, 200, InterfaceLayer);
+			int y = 200 - MainFont->Common.LineHeight;
+			DrawLine(-125, y, 125, y, InterfaceLayer);
 			ForEach(Player, player)
 			{
 				if (player->tank == NULL)
-					TextStd->Draw("*DEAD* " + player->NickName, -123, 155 - i * 16, InterfaceLayer, false);
+					MainFont->Draw("*DEAD* " + player->NickName, -125, y, InterfaceLayer);
 				else
-					TextStd->Draw(player->NickName, -123, 155 - i * 16, InterfaceLayer, false);
-				TextStd->Draw(to_string(player->KillsCount), 17, 155 - i * 16, InterfaceLayer, false);
-				TextStd->Draw(to_string(player->DeathsCount), 67, 155 - i * 16, InterfaceLayer, false);
-				DrawLine(-125, 168 - i * 16, 125, 168 - i * 16, InterfaceLayer);
-				i++;
+					MainFont->Draw(player->NickName, -125, y, InterfaceLayer);
+				MainFont->Draw(to_string(player->KillsCount), 15, y, InterfaceLayer);
+				MainFont->Draw(to_string(player->DeathsCount), 65, y, InterfaceLayer);
+				y -= MainFont->Common.LineHeight;
+				DrawLine(-125, y, 125, y, InterfaceLayer);
 			}
 		}
 		if (GameMode == 1)
 		{
 			DrawRect(-150, -200, 150, 200, true, InterfaceBackLayer, 0.75, 0.75, 0.75, 0.5);
 			DrawRect(-150, -200, 150, 200, false, InterfaceLayer);
-			TextStd->Draw("NickName", -148, 171, InterfaceLayer, false);
+			MainFont->Draw("NickName", -150, 171, InterfaceLayer);
 			DrawLine(-10, -200, -10, 200, InterfaceLayer);
-			TextStd->Draw("Wins", -8, 171, InterfaceLayer, false);
+			MainFont->Draw("Wins", -10, 171, InterfaceLayer);
 			DrawLine(40, -200, 40, 200, InterfaceLayer);
-			TextStd->Draw("Kills", 42, 171, InterfaceLayer, false);
+			MainFont->Draw("Kills", 40, 171, InterfaceLayer);
 			DrawLine(90, -200, 90, 200, InterfaceLayer);
-			TextStd->Draw("Deaths", 92, 171, InterfaceLayer, false);
-			DrawLine(-150, 184, 150, 184, InterfaceLayer);
-			int i = 0;
+			MainFont->Draw("Deaths", 90, 171, InterfaceLayer);
+			int y = 200 - MainFont->Common.LineHeight;
+			DrawLine(-150, y, 150, y, InterfaceLayer);
 			ForEach(Player, player)
 			{
 				if (player->tank == NULL)
-					TextStd->Draw("*DEAD* " + player->NickName, -148, 155 - i * 16, InterfaceLayer, false);
+					MainFont->Draw("*DEAD* " + player->NickName, -150, y, InterfaceLayer);
 				else
-					TextStd->Draw(player->NickName, -148, 155 - i * 16, InterfaceLayer, false);
-				TextStd->Draw(to_string(player->WinsCount), -8, 155 - i * 16, InterfaceLayer, false);
-				TextStd->Draw(to_string(player->KillsCount), 42, 155 - i * 16, InterfaceLayer, false);
-				TextStd->Draw(to_string(player->DeathsCount), 92, 155 - i * 16, InterfaceLayer, false);
-				DrawLine(-150, 168 - i * 16, 150, 168 - i * 16, InterfaceLayer);
-				i++;
+					MainFont->Draw(player->NickName, -150, y, InterfaceLayer);
+				MainFont->Draw(to_string(player->WinsCount), -10, y, InterfaceLayer);
+				MainFont->Draw(to_string(player->KillsCount), 40, y, InterfaceLayer);
+				MainFont->Draw(to_string(player->DeathsCount), 90, y, InterfaceLayer);
+				y -= MainFont->Common.LineHeight;
+				DrawLine(-150, y, 150, y, InterfaceLayer);
 			}
 		}
 		if (DbgPointsMode == 1)
@@ -687,168 +941,68 @@ void Draw()
 	}
 }
 
-void Console::Regisrer()
+void InitConsole()
 {
-	GameConsole->RegisterCommand("heal", [&](string Args)
+	BeginCommands() {}
+	RegisterCommand("heal", Arg<Tank*> tank)
 	{
-		bool Finded = false;
-		if (Args == "")
-		{
-			Player1->tank->HitPoints = 5;
-			Finded = true;
-		}
-		ForEach(Tank, tank)
-		{
-			if (tank->NickName == Args)
-			{
-				tank->HitPoints = 5;
-				Finded = true;
-			}
-		}
-		if (!Finded) GameConsole->SetMessage("Player not found");
-	});
-	GameConsole->RegisterCommand("wath", [&](string Args)
+		tank.SetDefault(Player1->tank);
+		tank->HitPoints = 5;
+	}
+	RegisterCommand("kill", Tank* tank)
 	{
-		bool Finded = false;
-		ForEach(Player, player)
-		{
-			if (player->NickName == Args || (Args == "" && player->tank != NULL))
-			{
-				WathedPlayer = player;
-				Finded = true;
-				break;
-			}
-		}
-		if (!Finded) GameConsole->SetMessage("Player not found");
-	});
-	GameConsole->RegisterCommand("kill", [&](string Args)
+		if (tank != NULL) tank->Die();
+	}
+	RegisterCommand("wath", Arg<Player*> player)
 	{
-		bool Finded = false;
-		ForEach(Tank, tank)
-		{
-			if (tank->NickName == Args)
-			{
-				tank->Die();
-				Finded = true;
-			}
-		}
-		if (!Finded) GameConsole->SetMessage("Player not found");
-	});
-	GameConsole->RegisterCommand("plane", [&](string Args)
+		player.SetDefault(Player1);
+		WathedPlayer = *player;
+	}
+	RegisterCommand("plane", Arg<Player*> player)
 	{
-		bool Finded = false;
-		if (Args == "")
-		{
-			Player1->PlaneReady = true;
-			Finded = true;
-		}
-		ForEach(Tank, tank)
-		{
-			if (tank->NickName == Args)
-			{
-				tank->player->PlaneReady = true;
-				Finded = true;
-			}
-		}
-		if (!Finded) GameConsole->SetMessage("Player not found");
-	});
-	GameConsole->RegisterCommand("mode", [&](string Args)
+		player.SetDefault(Player1);
+		(*player)->PlaneReady = true;
+	}
+	RegisterCommand("mode", int mode)
 	{
-		int NewMode;
-		try
-		{
-			NewMode = stoi(Args);
-		}
-		catch (...)
-		{
-			GameConsole->SetMessage("Invalid argument: must be integer");
-			return;
-		}
-		if (NewMode == 0 || NewMode == 1)
-			GameMode = NewMode;
-		else GameConsole->SetMessage("Mode " + to_string(NewMode) + " is not exist");
-	});
-	GameConsole->RegisterCommand("cammode", [&](string Args)
+		if (mode == 0 || mode == 1)
+			GameMode = mode;
+		else throw "Mode "s + to_string(mode) + " is not exist"s;
+	}
+	RegisterCommand("cammode", int mode)
 	{
-		int NewMode;
-		try
-		{
-			NewMode = stoi(Args);
-		}
-		catch (...)
-		{
-			GameConsole->SetMessage("Invalid argument: must be integer");
-			return;
-		}
-		if (NewMode == 0)
+		if (mode == 0)
 		{
 			CamMode = 0;
 			MainCamera.SetPoint(0, 0, 0);
 		}
-		else if (NewMode == 1 || NewMode == 2)
+		else if (mode == 1 || mode == 2)
 		{
-			CamMode = NewMode;
+			CamMode = mode;
 		}
-		else GameConsole->SetMessage("CamMode " + to_string(NewMode) + " is not exist");
-	});
-	GameConsole->RegisterCommand("scale", [&](string Args)
+		else throw "Cammode "s + to_string(mode) + " is not exist"s;
+	}
+	RegisterCommand("scale", double scale)
 	{
-		double Scale;
-		try
-		{
-			Scale = stod(Args);
-		}
-		catch (...)
-		{
-			GameConsole->SetMessage("Invalid argument: must be double");
-			return;
-		}
-		MainCamera.Scale = Scale;
-	});
-	GameConsole->RegisterCommand("fullscreen", [&](string Args)
+		MainCamera.Scale = scale;
+	}
+	RegisterCommand("fullscreen", bool fulscreen)
 	{
-		int NewMode;
-		try
-		{
-			NewMode = stoi(Args);
-		}
-		catch (...)
-		{
-			GameConsole->SetMessage("Invalid argument: must be integer");
-			return;
-		}
-		if (NewMode == 0)
-		{
-			NeedWindowed = true;
-		}
-		else if (NewMode == 1)
-		{
+		if (fulscreen)
 			NeedFullscreen = true;
-		}
-		else GameConsole->SetMessage("Argument must be 0 or 1");
-	});
-	GameConsole->RegisterCommand("map", [&](string Args)
+		else
+			NeedWindowed = true;
+	}
+	RegisterCommand("map", string map)
 	{
-		if (access(("Resources\\" + Args).c_str(), 0) != 0)
-		{
-			GameConsole->SetMessage("Directry Resources\\" + Args + " not found");
-			return;
-		}
-		if (access(("Resources\\" + Args + "\\.bmp").c_str(), 0) != 0)
-		{
-			GameConsole->SetMessage("File Resources\\" + Args + "\\.bmp not found");
-			return;
-		}
-		if (access(("Resources\\" + Args + "\\Coll_Mask.bmp").c_str(), 0) != 0)
-		{
-			GameConsole->SetMessage("File Resources\\" + Args + "\\Coll_Mask.bmp not found");
-			return;
-		}
-		if (access(("Resources\\" + Args + "\\Points.txt").c_str(), 0) != 0)
-		{
-			GameConsole->SetMessage("File Resources\\" + Args + "\\Points.txt not found");
-			return;
-		}
+		if (access(("Resources\\" + map).c_str(), 0) != 0)
+			throw "Directry Resources\\" + map + " not found";
+		if (access(("Resources\\" + map + "\\.bmp").c_str(), 0) != 0)
+			throw"File Resources\\" + map + "\\.bmp not found";
+		if (access(("Resources\\" + map + "\\Coll_Mask.bmp").c_str(), 0) != 0)
+			throw"File Resources\\" + map + "\\Coll_Mask.bmp not found";
+		if (access(("Resources\\" + map + "\\Points.txt").c_str(), 0) != 0)
+			throw "File Resources\\" + map + "\\Points.txt not found";
 		ForEach(Player, player)
 		{
 			if (player->tank != NULL)
@@ -857,120 +1011,50 @@ void Console::Regisrer()
 			player->Active = false;
 		}
 		Map1->Delete();
-		Map1 = new Map(Args);
+		Map1 = new Map(map);
 		Player1 = new Player("Player", Player1->Contr);
 		WathedPlayer = Player1;
-	});
-	GameConsole->RegisterCommand("newbot", [&](string Args)
+	}
+	RegisterCommand("newbot", string Name, Arg<int> Team)
 	{
-		(new Bot(Args));
-	});
-	GameConsole->RegisterCommand("delbot", [&](string Args)
+		Team.SetDefault(0);
+		(new Bot(Name))->Team = *Team;
+	}
+	RegisterCommand("kick", Player* player)
 	{
-		bool Finded = false;
-		ForEach(Bot, bot)
-		{
-			if (bot->NickName == Args || Args == "")
-			{
-				if (bot->tank != NULL)
-					bot->tank->Delete();
-				bot->Delete();
-				Finded = true;
-			}
-		}
-		if (!Finded) GameConsole->SetMessage("Bot not found");
-	});
-	GameConsole->RegisterCommand("exit", [&](string Args)
+		if (player->tank != NULL)
+			player->tank->Delete();
+		player->Delete();
+	}
+	RegisterCommand("exit")
 	{
 		Closed = true;
-	});
-	GameConsole->RegisterCommand("dbgpoints", [&](string Args)
+	}
+	RegisterCommand("dbgpoints", int mode)
 	{
-		int NewMode;
-		try
-		{
-			NewMode = stoi(Args);
-		}
-		catch (...)
-		{
-			GameConsole->SetMessage("Invalid argument: must be integer");
-			return;
-		}
-		if (NewMode >= 0 || NewMode <= 2)
-			DbgPointsMode = NewMode;
-		else GameConsole->SetMessage("DbgPointsMode " + to_string(NewMode) + " is not exist");
-	});
-	GameConsole->RegisterCommand("dbgclock", [&](string Args)
+		if (mode >= 0 && mode <= 2)
+			DbgPointsMode = mode;
+		else throw "DbgPointsMode " + to_string(mode) + " is not exist";
+	}
+	RegisterCommand("dbgclock", int mode)
 	{
-		int NewMode;
-		try
-		{
-			NewMode = stoi(Args);
-		}
-		catch (...)
-		{
-			GameConsole->SetMessage("Invalid argument: must be integer");
-			return;
-		}
-		if (NewMode >= 0 || NewMode <= 2)
-			DbgClockMode = NewMode;
-		else GameConsole->SetMessage("DbgClockMode " + to_string(NewMode) + " is not exist");
-	});
-	GameConsole->RegisterCommand("login", [&](string Args)
+		if (mode >= 0 && mode <= 2)
+			DbgClockMode = mode;
+		else throw "DbgClockMode " + to_string(mode) + " is not exist";
+	}
+	RegisterCommand("apache")
 	{
-		ifstream ifile("Resources//Players.txt", ios_base::in);
-		while (!ifile.eof())
-		{
-			string NickName;
-			ifile >> NickName;
-			if (NickName == Args)
-			{
-				Player1->NickName = NickName;
-				Player1->tank->NickName = NickName;
-				ifile >> Player1->KillsCount >> Player1->DeathsCount;
-				return;
-			}
-			else
-			{
-				ifile >> string() >> string();
-			}
-		}
-		ifile.close();
-		ofstream ofile("Resources//Players.txt", ios_base::out | ios_base::app);
-		Player1->NickName = Args;
-		Player1->tank->NickName = Args;
-		ofile << Args << " " << Player1->KillsCount << " " << Player1->DeathsCount << '\n';
-	});
-	GameConsole->RegisterCommand("save", [&](string Args)
+		new Apache(PointUnit(0, 0, 0), &Contr1);
+	}
+	RegisterCommand("loadimages")
 	{
-		ifstream ifile("Resources//Players.txt", ios_base::in);
-		list<tuple<string, int, int>> Records;
-		while (!ifile.eof())
-		{
-			string NickName;
-			int KillsCount;
-			int DeathsCount;
-			ifile >> NickName;
-			if (NickName == "") break;
-			if (NickName == Player1->NickName)
-			{
-				KillsCount = Player1->KillsCount;
-				DeathsCount = Player1->DeathsCount;
-				ifile >> string() >> string();
-			}
-			else
-			{
-				ifile >> KillsCount >> DeathsCount;
-			}
-			Records.emplace_back(tuple<string, int, int>(NickName, KillsCount, DeathsCount));
-		}
-		ifile.close();
-		ofstream ofile("Resources//Players.txt", ios_base::out);
-		for (tuple<string, int, int> Record : Records)
-		{
-			ofile << get<0>(Record) << " " << get<1>(Record) << " " << get<2>(Record) << '\n';
-		}
-	});
+		LoadImages();
+	}
+	RegisterCommand("c", Arg<string> command)
+	{
+		GameConsole->Execute(command);
+	}
+	EndCommands()
 }
 void InitLayers()
 {
@@ -985,6 +1069,8 @@ void LoadImages()
 {
 	TankBodyImage = new Image("Resources\\Tank\\Body\\.bmp");
 	TankTowerImage = new Image("Resources\\Tank\\Tower\\.bmp");
+	//TankBodyImage = new Image("Resources\\Unused\\Humwee\\Body\\.bmp");
+	//TankTowerImage = new Image("Resources\\Unused\\Humwee\\Tower\\.bmp");
 	BulletImage = new Image("Resources\\Bullet\\.bmp");
 	Fire1Image = new Image("Resources\\Fire\\1.bmp");
 	Fire2Image = new Image("Resources\\Fire\\2.bmp");
@@ -998,19 +1084,28 @@ void LoadImages()
 	ExplosiveImage = new AnimatedImage(1, Explosive1Image, 6);
 	SightImage = new Image("Resources\\Tank\\Sight\\.bmp");
 	PointerImage = new AnimatedImage(1, new Image("Resources\\Pointer\\.bmp"), 40);
-	TextStd = new Text(L"Resources\\Font.bmp", 256, 32, 32);
+	//TextStd = new Text(L"Resources\\Font.bmp", 256, 32, 32);
+	ApacheBodyImage = new Image("Resources\\Apache\\Body\\.bmp");
+	ApacheHelixImage = new Image("Resources\\Apache\\Helix\\.bmp");
+	AtgmImage = new Image("Resources\\Apache\\Atgm\\.bmp");
+	Image* AtgmTrack1Image = new Image("Resources\\Apache\\ATGM\\Track1.bmp");
+	Image* AtgmTrack2Image = new Image("Resources\\Apache\\ATGM\\Track2.bmp");
+	Image* AtgmTrack3Image = new Image("Resources\\Apache\\ATGM\\Track3.bmp");
+	AtgmTrackImage = new AnimatedImage(3, AtgmTrack1Image, 1, AtgmTrack2Image, 4, AtgmTrack3Image, 5);
+	ApacheSightImage = new Image("Resources\\Apache\\Sight\\.bmp");
 }
 void LoadMasks()
 {
 	TankMask = new Mask("Resources\\Tank\\Body\\Mask.bmp", 36, 24);
+	//TankMask = new Mask("Resources\\Unused\\Humwee\\Body\\Mask.bmp", 36, 24);
 	BulletMask = new Mask("Resources\\Bullet\\Mask.bmp", 12, 4);
 	HealMask = new Mask("Resources\\Heal\\Mask.bmp", 24, 24);
 	ExplosiveMask = new Mask("Resources\\Explosive\\Coll_Mask.bmp", 40, 40);
 }
 void GameInit()
 {
-	GameConsole = new Console();
-	GameConsole->Regisrer();
+	//new Chat(MainFont);
+	InitConsole();
 
 	Map1 = new Map("Map1");
 
@@ -1048,4 +1143,8 @@ void SetCamera()
 		MainCamera.SetPoint((WathedPlayer->tank->x * 2 + Contr1.Mouse.x) / 3, (WathedPlayer->tank->y * 2 + Contr1.Mouse.y) / 3, 0);
 	if (CamMode == 2)
 		MainCamera.SetPoint((WathedPlayer->tank->x * 2 + Contr1.Mouse.x) / 3, (WathedPlayer->tank->y * 2 + Contr1.Mouse.y) / 3, -WathedPlayer->tank->angle + 90);
+}
+void CameraChanged()
+{
+	if (GameConsole != NULL) GameConsole->UpdateInputRect();
 }

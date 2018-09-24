@@ -7,6 +7,9 @@ Layer* LowestLayer;
 Layer* InterfaceLayer;
 Layer* InterfaceBackLayer;
 
+Font* MainFont;
+Console* GameConsole = NULL;
+
 void Control()
 {
 	GetCursorPos(&(Contr1.Mouse));
@@ -38,38 +41,39 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	//AllocConsole();
 	//freopen("CONOUT$", "w", stdout);
 	//freopen("CONIN$", "r", stdin);
-	InitGraphic(hinst, nCmdShow, L"Single"); // Инициализация графики
+	InitGraphic(hinst, nCmdShow, L"Single");
 	Sync1 = new Syncronizer();
 	LowestLayer = Layer::New(false);
-	InterfaceLayer = Layer::Higher(LowestLayer, true);       // Создание основных слоёв
+	InterfaceLayer = Layer::Higher(LowestLayer, true);
 	InterfaceBackLayer = Layer::Lower(InterfaceLayer, true);
 	BeginDraw();
-	InitLayers(); // Создание остальных игровых слоев
-	LoadImages(); // Загрузка изображений
-	LoadMasks(); //Загрузка масок для столкновений
-	GameInit(); // Инициализация игры
+	MainFont = new Font("Resources\\Font", "Font4");
+	InitLayers();
+	LoadImages();
+	LoadMasks();
+	GameInit();
 	EndDraw();
 	while (true)
 	{
-		BaseUnit::ActivateAll(); // Активация всех объектов
-		Control(); // Получение состояния клавиатуры и мыши
-		BeginDraw(); 
-		AllCollCheck(); // Проверка столкновений и их обработка
-		CalcAllSolidPhysicUnits(); // Расчет всех физических столкновений
-		CallEach(PhysicUnit) Calc(); // Расчет физики
-		CallEach(SteepProcedUnit) SteepProc(); // Вызов всех функций SteepProc
-		CallEach(GraphicUnit) DrawProc(); // Вызов функций, сообщающих об отрисовке
-		CallEach(GraphicUnit) Draw(); // Рисование GraphicUnit'ов
-		CallEach(AnimatedGraphicUnit) DrawProc(); // Вызов функций, сообщающих об отрисовке
-		CallEach(AnimatedGraphicUnit) Draw(); // Рисование AnimatedGraphicUnit'ов
-		SteepProc(); // Вызов функции для каждого шага
-		Draw(); // Общее рисование
+		BaseUnit::ActivateAll();
+		Control();
+		BeginDraw();
+		AllCollCheck();
+		CalcAllSolidPhysicUnits();
+		CallEach(PhysicUnit) Calc();
+		CallEach(SteepProcedUnit) SteepProc();
+		CallEach(GraphicUnit) DrawProc();
+		CallEach(GraphicUnit) Draw();
+		CallEach(AnimatedGraphicUnit) DrawProc();
+		CallEach(AnimatedGraphicUnit) Draw();
+		SteepProc();
+		Draw();
 		EndDraw();
-		BaseUnit::DeleteAllThatNeedDelete(); // Удаление всех объектов, помеченных, как требующе удаления
+		BaseUnit::DeleteAllThatNeedDelete();
 		if (Closed) return 0;
 		//bool OutTime = Contr1.Keys[VK_TAB];
 		//if (OutTime) cout << (std::chrono::high_resolution_clock::now() - Time).count() / 1'000'000.0 << ' ';
-		Sync1->Sync(17ms); // Осуществление задержки для поддержания 60 шагов в секунду
+		Sync1->Sync(17ms);
 		//if (OutTime) cout << (std::chrono::high_resolution_clock::now() - Time).count() / 1'000'000.0 << std::endl;
 	}
 	return 0;

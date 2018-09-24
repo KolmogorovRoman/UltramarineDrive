@@ -5,6 +5,7 @@
 #include "Management.h"
 #include "Misc.h"
 #include "Graphic.h"
+#include "Font.h"
 #include "Physic.h"
 #include "SolidPhysic.h"
 #include "Solid.h"
@@ -22,5 +23,7 @@ void Control();
 extern Layer* LowestLayer;
 extern Layer* InterfaceLayer;
 extern Layer* InterfaceBackLayer;
+
+extern Font* MainFont;
 
 int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow);

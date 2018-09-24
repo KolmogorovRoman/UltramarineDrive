@@ -1,6 +1,5 @@
 scale 1.5
 cammode 1
-fullscreen 1
 newbot Alpha
 newbot Beta
 newbot Gamma

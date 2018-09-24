@@ -88,16 +88,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\UltramarineSingle\Console.cpp" />
+    <ClCompile Include="..\UltramarineSingle\Font.cpp" />
+    <ClCompile Include="..\UltramarineSingle\Geometry.cpp" />
     <ClCompile Include="..\UltramarineSingle\Graphic.cpp" />
     <ClCompile Include="..\UltramarineSingle\Management.cpp" />
     <ClCompile Include="..\UltramarineSingle\Misc.cpp" />
     <ClCompile Include="..\UltramarineSingle\Physic.cpp" />
+    <ClCompile Include="..\UltramarineSingle\Serialization.cpp" />
     <ClCompile Include="..\UltramarineSingle\Solid.cpp" />
     <ClCompile Include="..\UltramarineSingle\SolidPhysic.cpp" />
     <ClCompile Include="Drive.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="NetProtocols.cpp" />
-    <ClCompile Include="Serialization.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -107,16 +109,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\UltramarineSingle\Console.h" />
+    <ClInclude Include="..\UltramarineSingle\Font.h" />
+    <ClInclude Include="..\UltramarineSingle\Geometry.h" />
     <ClInclude Include="..\UltramarineSingle\Graphic.h" />
     <ClInclude Include="..\UltramarineSingle\Management.h" />
     <ClInclude Include="..\UltramarineSingle\Misc.h" />
     <ClInclude Include="..\UltramarineSingle\Physic.h" />
+    <ClInclude Include="..\UltramarineSingle\Serialization.h" />
     <ClInclude Include="..\UltramarineSingle\Solid.h" />
     <ClInclude Include="..\UltramarineSingle\SolidPhysic.h" />
     <ClInclude Include="Drive.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="NetProtocols.h" />
-    <ClInclude Include="Serialization.h" />
     <ClInclude Include="Server.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

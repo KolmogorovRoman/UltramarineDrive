@@ -11,7 +11,6 @@ class Explosive;
 class TankController;
 
 #include "Drive.h"
-#include "resource.h"
 using namespace std;
 
 extern Controller Contr1;

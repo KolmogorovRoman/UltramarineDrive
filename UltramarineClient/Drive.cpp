@@ -7,6 +7,8 @@ Layer* LowestLayer;
 Layer* InterfaceLayer;
 Layer* InterfaceBackLayer;
 
+Font* MainFont;
+
 void Control()
 {
 	GetCursorPos(&(Contr1.Mouse));
@@ -44,6 +46,7 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	InterfaceLayer = Layer::Higher(LowestLayer, true);
 	InterfaceBackLayer = Layer::Lower(InterfaceLayer, true);
 	BeginDraw();
+	MainFont = new Font("Resources\\Font", "Font4");
 	InitLayers();
 	LoadImages();
 	LoadMasks();

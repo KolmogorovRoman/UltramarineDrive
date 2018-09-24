@@ -1,29 +1,47 @@
 #include "Console.h"
 
-Console::Command::Command()
+void ParseTuple(stringstream& String, TupleRec<>& Tuple)
 {}
-Console::Command::Command(string Name, function<void(string Arg)> Action):
-	Name(Name), Action(Action)
-{}
-void Console::RegisterCommand(string Name, function<void(string Arg)> Action)
+
+Arg<string>::operator string()
 {
-	if (Commands.find(Name) != Commands.end())
-	{
-		Message = "Command " + Name + " already exist";
-		return;
-	}
-	Commands[Name] = new Command(Name, Action);
+	return Value;
 }
-void Console::Draw()
+string& Arg<string>::operator* ()
+{
+	return Value;
+}
+template<>
+void Parse<Arg<string>>(stringstream& String, Arg<string>& s)
+{
+	getline(String, *s);
+}
+
+Console::Console(Font* font, Layer* backlayer, Layer* layer, Controller& contr):
+	font(font), backlayer(backlayer), layer(layer), contr(contr),
+	GraphicUnit(NULL, NULL),
+	InputRect(-MainCamera.Width / 2, MainCamera.Height / 2, MainCamera.Width / 2, MainCamera.Height / 2 - font->Common.LineHeight)
+{}
+void Console::UpdateInputRect()
+{
+	InputRect.Left = -MainCamera.Width / 2;
+	InputRect.Top = MainCamera.Height / 2;
+	InputRect.Right = MainCamera.Width / 2;
+	InputRect.Bottom = MainCamera.Height / 2 - font->Common.LineHeight;
+}
+Console::BaseCommand::BaseCommand(string Name):
+	Name(Name)
+{}
+void Console::DrawProc()
 {
 	if (Active)
 	{
-		DrawRect(-MainCamera.Width / 2, MainCamera.Height / 2, MainCamera.Width / 2, MainCamera.Height / 2 - 32, true, InterfaceBackLayer, 0.2, 0.2, 0.2, 0.75);
-		DrawRect(-MainCamera.Width / 2, MainCamera.Height / 2, MainCamera.Width / 2, MainCamera.Height / 2 - 32, false, InterfaceLayer);
+		DrawRect(InputRect.Left, InputRect.Bottom, InputRect.Right, InputRect.Top, true, backlayer, 0.2, 0.2, 0.2, 0.75);
+		DrawRect(InputRect.Left, InputRect.Bottom, InputRect.Right, InputRect.Top, false, layer);
 		if (CurrentInput != "")
-			TextStd->Draw(CurrentInput, -MainCamera.Width / 2, MainCamera.Height / 2 - 32, InterfaceLayer, false);
+			font->Draw(CurrentInput, InputRect.Left, InputRect.Top, layer);
 		else
-			TextStd->Draw(Message, -MainCamera.Width / 2, MainCamera.Height / 2 - 32, InterfaceLayer, false);
+			font->Draw(Message, InputRect.Left, InputRect.Top, layer);
 	}
 }
 void Console::Activate()
@@ -47,44 +65,55 @@ void Console::AddChar(char Char)
 }
 void Console::Execute()
 {
-	string CommandText;
-	string Args = "";
-	getline(stringstream(CurrentInput), CommandText, ' ');
-	if (CurrentInput.length() > CommandText.length())
-		Args = CurrentInput.substr(CommandText.length() + 1, 256);
-	Command* command = Commands[CommandText];
-	if (command != NULL) command->Action(Args);
-	else Message = "Command not exist";
+	try
+	{
+		Execute(CurrentInput);
+	}
+	catch (string Error)
+	{
+		Message = Error;
+	}
 	PrevInput = CurrentInput;
 	CurrentInput = "";
 	if (Message == "") Deactivate();
 }
 void Console::Execute(string Input)
 {
+	stringstream Stream(Input);
+	Execute(Stream);
+}
+void Console::Execute(stringstream& Input)
+{
 	string CommandText;
-	string Args = "";
-	getline(stringstream(Input), CommandText, ' ');
-	if (Input.length() > CommandText.length())
-		Args = Input.substr(CommandText.length() + 1, 256);
-	Command* command = Commands[CommandText];
-	if (command != NULL) command->Action(Args);
+	Input >> CommandText;
+	BaseCommand* command = Commands[CommandText];
+	if (command != NULL)
+	{
+		try
+		{
+			command->Execute(Input);
+		}
+		catch (string Error)
+		{
+			Message = Error;
+		}
+	}
 	else Message = "Command not exist";
-	Deactivate();
 }
 void Console::SteepProc()
 {
-	if (!Active && Contr1.Keys[VK_RETURN] == 1)
+	if (!Active && contr.Keys[EnterKey] == 1)
 	{
 		Activate();
 		return;
 	}
 	if (!Active) return;
-	if (Contr1.Keys[VK_RETURN] == 1 && CurrentInput == "")
+	if (contr.Keys[EnterKey] == 1 && CurrentInput == "")
 	{
 		Deactivate();
 		return;
 	}
-	if ((Contr1.Keys[VK_UP] == 1 || Contr1.Keys[VK_DOWN] == 1))
+	if ((contr.Keys[PrevKey] == 1 || contr.Keys[NextKey] == 1))
 	{
 		swap(CurrentInput, PrevInput);
 		Message = "";
@@ -94,23 +123,25 @@ void Console::SteepProc()
 	for (int i = 0; i < 256; i++)
 	{
 		WORD C;
-		if (Contr1.Keys[i] == 1 || (Contr1.Keys[i] >= 20 && Contr1.Keys[i] & 1 != 0))
+		if (contr.Keys[i] == 1 || (contr.Keys[i] >= 20 && contr.Keys[i] & 1 != 0))
 		{
 			if (ToAscii(i, 0b10000000, KeyboardState, &C, 0) == 1)
-				if ((char) C >= ' ' && (char) C <= '~')
+				if ((char)C >= ' ' && (char)C <= '~')
 					AddChar(C);
 		}
 	}
-	if (Contr1.Keys[VK_RETURN] == 1) Execute();
-	if (Contr1.Keys[VK_BACK] == 1 || (Contr1.Keys[VK_BACK] >= 20 && Contr1.Keys[VK_BACK] & 1 != 0)) CurrentInput = CurrentInput.substr(0, CurrentInput.length() - 1);
-	if (Contr1.Keys[VK_ESCAPE] == 1)
+	if (contr.Keys[EnterKey] == 1) Execute();
+	if (contr.Keys[VK_BACK] == 1 || (contr.Keys[VK_BACK] >= 20 && contr.Keys[VK_BACK] & 1 != 0)) CurrentInput = CurrentInput.substr(0, CurrentInput.length() - 1);
+	if (contr.Keys[CloseKey] == 1)
 	{
 		Deactivate();
 		return;
 	}
-	Draw();
+	//Draw();
 }
 void Console::SetMessage(string Message)
 {
 	this->Message = Message;
 }
+void Console::ForMagic(function<void()>)
+{}

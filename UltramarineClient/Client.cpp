@@ -69,7 +69,8 @@ void Client::NecResendProc()
 }
 void Client::SendTo(BYTE* Buff, int BuffLen, SOCKADDR_IN* DestAddr)
 {
-	sendto(Socket, (char*) Buff, BuffLen, 0, (sockaddr*) DestAddr, sizeof sockaddr);
+	int res=sendto(Socket, (char*) Buff, BuffLen, 0, (sockaddr*) DestAddr, sizeof sockaddr);
+	int err = WSAGetLastError();
 }
 void Client::SendConfirm(UINT Number, sockaddr_in* DestAddr)
 {

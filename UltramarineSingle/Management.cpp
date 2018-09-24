@@ -48,10 +48,10 @@ void Syncronizer::Sync(std::chrono::nanoseconds TimeInterval)
 	auto EndTime = Time + TimeInterval;
 	while (std::chrono::high_resolution_clock::now() < EndTime)
 	{
-		std::this_thread::sleep_for(100us);
-		/*volatile int t = 42;
+		//std::this_thread::sleep_for(100us);
+		volatile int t = 42;
 		for (int i = 0; i < 100; i++)
-			sin(t);*/
+			sin(t);
 	}
 	//std::this_thread::sleep_until(EndTime);
 	Time = std::chrono::high_resolution_clock::now();
