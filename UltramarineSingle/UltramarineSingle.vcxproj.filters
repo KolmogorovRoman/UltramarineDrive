@@ -84,6 +84,9 @@
     <ClInclude Include="Chat.h">
       <Filter>Modules\Chat</Filter>
     </ClInclude>
+    <ClInclude Include="Interpreter.h">
+      <Filter>Modules\Console</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Physic.cpp">
@@ -124,6 +127,9 @@
     </ClCompile>
     <ClCompile Include="Chat.cpp">
       <Filter>Modules\Chat</Filter>
+    </ClCompile>
+    <ClCompile Include="Interpreter.cpp">
+      <Filter>Modules\Console</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

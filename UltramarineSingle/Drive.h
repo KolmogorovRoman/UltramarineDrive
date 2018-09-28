@@ -25,7 +25,8 @@ extern Font* MainFont;
 extern Console* GameConsole;
 
 #define BeginCommands() GameConsole = new Console(MainFont, InterfaceBackLayer, InterfaceLayer, Contr1); GameConsole->ForMagic([]()
-#define RegisterCommand(Name, ...) ); GameConsole->RegisterCommand(Name, (function<void(__VA_ARGS__)>)[&](__VA_ARGS__)
+#define AddCommand(ResultType, Name, ...) ); GameConsole->RegisterCommand(Name, (function<ResultType(__VA_ARGS__)>)[&](__VA_ARGS__)
+#define Proc(ResultType, ...) (function<ResultType(__VA_ARGS__)>)[&](__VA_ARGS__)
 #define EndCommands() );
 
 void Control();

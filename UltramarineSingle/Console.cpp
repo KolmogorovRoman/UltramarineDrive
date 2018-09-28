@@ -1,6 +1,6 @@
 #include "Console.h"
 
-void ParseTuple(stringstream& String, TupleRec<>& Tuple)
+void ParseTuple(Console* console, istream& String, TupleRec<>& Tuple)
 {}
 
 Arg<string>::operator string()
@@ -11,17 +11,16 @@ string& Arg<string>::operator* ()
 {
 	return Value;
 }
-template<>
-void Parse<Arg<string>>(stringstream& String, Arg<string>& s)
-{
-	getline(String, *s);
-}
 
 Console::Console(Font* font, Layer* backlayer, Layer* layer, Controller& contr):
 	font(font), backlayer(backlayer), layer(layer), contr(contr),
 	GraphicUnit(NULL, NULL),
 	InputRect(-MainCamera.Width / 2, MainCamera.Height / 2, MainCamera.Width / 2, MainCamera.Height / 2 - font->Common.LineHeight)
 {}
+void Console::RegisterCommand(BaseCommand* command)
+{
+	Commands[command->Name] = command;
+}
 void Console::UpdateInputRect()
 {
 	InputRect.Left = -MainCamera.Width / 2;
@@ -29,9 +28,13 @@ void Console::UpdateInputRect()
 	InputRect.Right = MainCamera.Width / 2;
 	InputRect.Bottom = MainCamera.Height / 2 - font->Common.LineHeight;
 }
-Console::BaseCommand::BaseCommand(string Name):
+BaseCommand::BaseCommand(string Name):
 	Name(Name)
 {}
+string BaseCommand::Execute(Console* console, istream& String)
+{
+	return GetExpression(console, String)->Execute();
+}
 void Console::DrawProc()
 {
 	if (Active)
@@ -63,11 +66,12 @@ void Console::AddChar(char Char)
 	CurrentInput += Char;
 	Message = "";
 }
-void Console::Execute()
+string Console::Execute()
 {
+	string Result = ""s;
 	try
 	{
-		Execute(CurrentInput);
+		Result = Execute(CurrentInput);
 	}
 	catch (string Error)
 	{
@@ -76,22 +80,24 @@ void Console::Execute()
 	PrevInput = CurrentInput;
 	CurrentInput = "";
 	if (Message == "") Deactivate();
+	return Result;
 }
-void Console::Execute(string Input)
+string Console::Execute(string Input)
 {
-	stringstream Stream(Input);
-	Execute(Stream);
+	istringstream Stream(Input);
+	return Execute(Stream);
 }
-void Console::Execute(stringstream& Input)
+string Console::Execute(istream& Input)
 {
-	string CommandText;
+	/*string CommandText;
 	Input >> CommandText;
 	BaseCommand* command = Commands[CommandText];
+	string Result = ""s;
 	if (command != NULL)
 	{
 		try
 		{
-			command->Execute(Input);
+			Result = command->Execute(this, Input);
 		}
 		catch (string Error)
 		{
@@ -99,6 +105,21 @@ void Console::Execute(stringstream& Input)
 		}
 	}
 	else Message = "Command not exist";
+	return Result;*/
+	string Result = ""s;
+	while (Input && !Input.eof())
+	{
+		Result = GetExpression(Input)->Execute();
+	}
+	return Result;
+}
+Expression* Console::GetExpression(istream& Input)
+{
+	string CommandName;
+	Input >> CommandName;
+	BaseCommand* basecommand = Commands[CommandName];
+	Expression* expr = basecommand->GetExpression(this, Input);
+	return expr;
 }
 void Console::SteepProc()
 {
@@ -143,5 +164,24 @@ void Console::SetMessage(string Message)
 {
 	this->Message = Message;
 }
-void Console::ForMagic(function<void()>)
+void Console::ForMagic(function<void()> func)
+{
+	func();
+}
+
+Expression::Expression(BaseCommand* basecommand):
+	basecommand(basecommand)
+{}
+
+void Parse(Console* console, istream& String, Expression*& e)
+{
+	e = console->GetExpression(String);
+}
+
+void Parse(Console* console, istream& String, istream*& s)
+{
+	s = &String;
+}
+
+void CalculateTuple(TupleRec<>& Tuple)
 {}

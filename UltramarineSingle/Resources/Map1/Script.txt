@@ -4,3 +4,13 @@ fullscreen 0
 newbot Alpha 0
 newbot Beta 0
 newbot Gamma 0
+alias a 
+begin
+	mode 1
+	scale 2
+end
+alias b
+begin
+	mode 0
+	scale 1
+end

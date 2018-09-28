@@ -157,6 +157,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Graphic.h" />
+    <ClInclude Include="Interpreter.h" />
     <ClInclude Include="Management.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="Physic.h" />
@@ -173,6 +174,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Graphic.cpp" />
+    <ClCompile Include="Interpreter.cpp" />
     <ClCompile Include="Management.cpp" />
     <ClCompile Include="Misc.cpp" />
     <ClCompile Include="Physic.cpp" />

@@ -60,7 +60,7 @@ public:
 	ContMask* contmask;
 	~Tank();
 };
-stringstream& operator >> (stringstream& stream, Tank*& tank);
+//stringstream& operator >> (stringstream& stream, Tank*& tank);
 class Map:
 	public ManagedUnit<Map>,
 	public GraphicUnit,
@@ -101,7 +101,7 @@ public:
 	int KillsCount;
 	int DeathsCount;
 };
-stringstream& operator >> (stringstream& stream, Player*& tank);
+//stringstream& operator >> (stringstream& stream, Player*& tank);
 class Bot:
 	public ManagedUnit<Bot>,
 	public Player,

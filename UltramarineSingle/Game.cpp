@@ -297,10 +297,15 @@ Tank::~Tank()
 	delete contmask;
 	Tower->Delete();
 }
-stringstream & operator >> (stringstream & stream, Tank *& tank)
+void Parse(Console* console, istream & stream, Tank*& tank)
 {
-	string NickName;
-	stream >> NickName;
+	string* NickName = new string();
+	stream >> *NickName;
+	tank = (Tank*)NickName;
+}
+void Calculate(Tank*& tank)
+{
+	string NickName = *((string*)tank);
 	tank = NULL;
 	ForEach(Tank, t)
 	{
@@ -311,7 +316,6 @@ stringstream & operator >> (stringstream & stream, Tank *& tank)
 		}
 	}
 	if (tank == NULL) throw "Tank not found"s;
-	return stream;
 }
 
 Map::Map(string MapDir):
@@ -368,12 +372,13 @@ Map::Map(string MapDir):
 	ifstream Script("Resources\\" + MapDir + "\\Script.txt");
 	if (Script.is_open())
 	{
-		while (!Script.eof())
+		/*while (!Script.eof())
 		{
 			string Command;
 			std::getline(Script, Command);
 			GameConsole->Execute(Command);
-		}
+		}*/
+		GameConsole->Execute(Script);
 	}
 }
 
@@ -415,7 +420,7 @@ void Player::SpawnProc()
 		WathedPlayer = this;
 	}
 }
-stringstream& operator >> (stringstream& stream, Player*& player)
+istream& operator >> (istream& stream, Player*& player)
 {
 	string NickName;
 	stream >> NickName;
@@ -941,35 +946,78 @@ void Draw()
 	}
 }
 
+struct BlockExpression:
+	public Expression
+{
+	BlockExpression(BaseCommand* command):
+		Expression(command)
+	{}
+	list<Expression*> Expressions;
+	string Execute() override;
+};
+
+string BlockExpression::Execute()
+{
+	for (Expression* expr : Expressions)
+	{
+		expr->Execute();
+	}
+	return ""s;
+}
+
+struct BlockCommand:
+	public BaseCommand
+{
+	BlockCommand():
+		BaseCommand("begin")
+	{}
+	Expression* GetExpression(Console* console, istream& Args) override;
+};
+
+Expression* BlockCommand::GetExpression(Console* console, istream& s)
+{
+	BlockExpression* expr = new BlockExpression(this);
+	while (s)
+	{
+		Expression* e = console->GetExpression(s);
+		if (e->basecommand->Name == "end") break;
+		expr->Expressions.push_back(e);
+	}
+	return expr;
+}
+
 void InitConsole()
 {
-	BeginCommands() {}
-	RegisterCommand("heal", Arg<Tank*> tank)
+	BeginCommands()
+	{
+		GameConsole->RegisterCommand(new BlockCommand());
+	}
+	AddCommand(void, "heal", Arg<Tank*> tank)
 	{
 		tank.SetDefault(Player1->tank);
 		tank->HitPoints = 5;
 	}
-	RegisterCommand("kill", Tank* tank)
+	AddCommand(void, "kill", Arg<Tank*> tank)
 	{
-		if (tank != NULL) tank->Die();
+		if (*tank != NULL) tank->Die();
 	}
-	RegisterCommand("wath", Arg<Player*> player)
+	AddCommand(void, "wath", Arg<Player*> player)
 	{
 		player.SetDefault(Player1);
 		WathedPlayer = *player;
 	}
-	RegisterCommand("plane", Arg<Player*> player)
+	AddCommand(void, "plane", Arg<Player*> player)
 	{
 		player.SetDefault(Player1);
 		(*player)->PlaneReady = true;
 	}
-	RegisterCommand("mode", int mode)
+	AddCommand(void, "mode", int mode)
 	{
 		if (mode == 0 || mode == 1)
 			GameMode = mode;
 		else throw "Mode "s + to_string(mode) + " is not exist"s;
 	}
-	RegisterCommand("cammode", int mode)
+	AddCommand(void, "cammode", int mode)
 	{
 		if (mode == 0)
 		{
@@ -982,18 +1030,18 @@ void InitConsole()
 		}
 		else throw "Cammode "s + to_string(mode) + " is not exist"s;
 	}
-	RegisterCommand("scale", double scale)
+	AddCommand(void, "scale", double scale)
 	{
 		MainCamera.Scale = scale;
 	}
-	RegisterCommand("fullscreen", bool fulscreen)
+	AddCommand(void, "fullscreen", bool fulscreen)
 	{
 		if (fulscreen)
 			NeedFullscreen = true;
 		else
 			NeedWindowed = true;
 	}
-	RegisterCommand("map", string map)
+	AddCommand(void, "map", string map)
 	{
 		if (access(("Resources\\" + map).c_str(), 0) != 0)
 			throw "Directry Resources\\" + map + " not found";
@@ -1015,44 +1063,76 @@ void InitConsole()
 		Player1 = new Player("Player", Player1->Contr);
 		WathedPlayer = Player1;
 	}
-	RegisterCommand("newbot", string Name, Arg<int> Team)
+	AddCommand(void, "newbot", string Name, Arg<int> Team)
 	{
 		Team.SetDefault(0);
 		(new Bot(Name))->Team = *Team;
 	}
-	RegisterCommand("kick", Player* player)
+	AddCommand(void, "kick", Player* player)
 	{
 		if (player->tank != NULL)
 			player->tank->Delete();
 		player->Delete();
 	}
-	RegisterCommand("exit")
+	AddCommand(void, "exit")
 	{
 		Closed = true;
 	}
-	RegisterCommand("dbgpoints", int mode)
+	AddCommand(void, "dbgpoints", int mode)
 	{
 		if (mode >= 0 && mode <= 2)
 			DbgPointsMode = mode;
 		else throw "DbgPointsMode " + to_string(mode) + " is not exist";
 	}
-	RegisterCommand("dbgclock", int mode)
+	AddCommand(void, "dbgclock", int mode)
 	{
 		if (mode >= 0 && mode <= 2)
 			DbgClockMode = mode;
 		else throw "DbgClockMode " + to_string(mode) + " is not exist";
 	}
-	RegisterCommand("apache")
+	AddCommand(void, "apache")
 	{
 		new Apache(PointUnit(0, 0, 0), &Contr1);
 	}
-	RegisterCommand("loadimages")
+	AddCommand(void, "loadimages")
 	{
 		LoadImages();
 	}
-	RegisterCommand("c", Arg<string> command)
+	AddCommand(bool, "o", int i)
 	{
-		GameConsole->Execute(command);
+		return i % 2 == 1;
+	}
+	AddCommand(void, "if", Expression* cond, Expression* expr)
+	{
+		if (cond->Execute() == "true"s) expr->Execute();
+	}
+	AddCommand(void, "for", int n, Expression* expr)
+	{
+		for (int i = 0; i < n; i++)
+			expr->Execute();
+	}
+	/*AddCommand(void, "begin", stringstream* s)
+	{
+		list<Expression*> Expressions;
+		while (*s)
+		{
+			Expression* expr = GameConsole->GetExpression(*s);
+			if (expr->basecommand->Name == "end") break;
+			Expressions.push_back(expr);
+		}
+		for (Expression* e : Expressions)
+		{
+			e->Execute();
+		}
+	}*/
+	AddCommand(void, "end")
+	{}
+	AddCommand(void, "alias", string name, Expression* expr)
+	{
+		GameConsole->RegisterCommand(name, (function<string()>)[&, expr]()->string
+		{
+			return expr->Execute();
+		});
 	}
 	EndCommands()
 }
