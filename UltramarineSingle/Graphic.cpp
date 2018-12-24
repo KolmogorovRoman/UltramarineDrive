@@ -197,10 +197,6 @@ void Image::Draw(double x, double y, Layer* layer, double angle, double wScale, 
 {
 	layer->Add(*(new ImageExemplar(this, x, y, angle, wScale, hScale, OverScreen)));
 }
-Image::~Image()
-{
-	delete[] Mask;
-}
 
 AnimatedImage::AnimatedImage(int Count, Image* Image1, int Time1...)
 {
@@ -228,6 +224,7 @@ AnimatedImage::~AnimatedImage()
 }
 
 std::list<Layer*> Layer::LayersList;
+std::list<ModelExemplar*> ModelsExemplarsList;
 Layer::Layer(bool IsInterface):
 	IsInterface(IsInterface)
 {
@@ -345,6 +342,201 @@ void EndDraw()
 GLuint base;
 GLYPHMETRICSFLOAT gmf[256];
 HFONT Font;
+
+GLuint VBO;
+
+Model::Model(string Path, string FileName)
+{
+	glGenBuffers(1, &VboIndex);
+	glGenBuffers(1, &ColorsIndex);
+	glGenBuffers(1, &NormalsIndex);
+	ifstream File(Path + FileName);
+	map<string, Material*> Materials;
+	Material* CurrentMaterial;
+	do
+	{
+		string Line;
+		getline(File, Line);
+		stringstream LineStream(Line);
+		string Command;
+		LineStream >> Command;
+		if (Command == "mtllib"s)
+		{
+			string MtlFileName;
+			LineStream >> MtlFileName;
+			ifstream MtlFile(Path + MtlFileName);
+			string CurrentMaterialName;
+			do
+			{
+				string Line;
+				getline(MtlFile, Line);
+				stringstream LineStream(Line);
+				string Command;
+				LineStream >> Command;
+				if (Command == "newmtl"s)
+				{
+					LineStream >> CurrentMaterialName;
+					Materials[CurrentMaterialName] = new Material();
+				}
+				if (Command == "Kd"s)
+				{
+					LineStream >>
+						Materials[CurrentMaterialName]->Diffuse.r >>
+						Materials[CurrentMaterialName]->Diffuse.g >>
+						Materials[CurrentMaterialName]->Diffuse.b;
+				}
+			} while (MtlFile);
+		}
+		if (Command == "v"s)
+		{
+			Vertex v;
+			LineStream >> v.x >> v.y >> v.z;
+			Vertexes.push_back(v);
+		}
+		if (Command == "vt"s)
+		{
+			TextureVertex v;
+			LineStream >> v.u >> v.v;
+			TextureVertexes.push_back(v);
+		}
+		if (Command == "vn"s)
+		{
+			Normale n;
+			LineStream >> n.x >> n.y >> n.z;
+			double r = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+			n.x /= r;
+			n.y /= r;
+			n.z /= r;
+			Normales.push_back(n);
+		}
+		if (Command == "f"s)
+		{
+			Face f;
+			char slash;
+			for (int i = 0; i < 3; i++)
+			{
+				LineStream >> f.Vertexes[i].VertexIndex;
+				if ((char)LineStream.peek() == '/')
+				{
+					LineStream >> slash;
+					if ((char)LineStream.peek() == '/')
+					{
+						LineStream >> slash >> f.Vertexes[i].NormalIndex;
+					}
+					else
+					{
+						LineStream >> f.Vertexes[i].TextureIndex;
+						if ((char)LineStream.peek() == '/')
+						{
+							LineStream >> slash >> f.Vertexes[i].NormalIndex;
+						}
+					}
+				}
+			}
+			if (f.Vertexes[0].NormalIndex == 0)
+			{
+				Normale n;
+				double a[3] = {
+					Vertexes[f.Vertexes[1].VertexIndex - 1].x
+					- Vertexes[f.Vertexes[0].VertexIndex - 1].x,
+					Vertexes[f.Vertexes[1].VertexIndex - 1].y
+					- Vertexes[f.Vertexes[0].VertexIndex - 1].y,
+					Vertexes[f.Vertexes[1].VertexIndex - 1].z
+					- Vertexes[f.Vertexes[0].VertexIndex - 1].z, };
+				double b[3] = {
+					Vertexes[f.Vertexes[2].VertexIndex - 1].x
+					- Vertexes[f.Vertexes[0].VertexIndex - 1].x,
+					Vertexes[f.Vertexes[2].VertexIndex - 1].y
+					- Vertexes[f.Vertexes[0].VertexIndex - 1].y,
+					Vertexes[f.Vertexes[2].VertexIndex - 1].z
+					- Vertexes[f.Vertexes[0].VertexIndex - 1].z, };
+				n.x = a[1] * b[2] - a[2] * b[1];
+				n.y = a[2] * b[0] - a[0] * b[2];
+				n.z = a[0] * b[1] - a[1] * b[0];
+				double r = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+				n.x /= r;
+				n.y /= r;
+				n.z /= r;
+				Normales.push_back(n);
+				f.Vertexes[0].NormalIndex = Normales.size();
+				f.Vertexes[1].NormalIndex = Normales.size();
+				f.Vertexes[2].NormalIndex = Normales.size();
+			}
+			f.Material = CurrentMaterial;
+			Faces.push_back(f);
+		}
+		if (Command == "usemtl"s)
+		{
+			string MtlName;
+			LineStream >> MtlName;
+			CurrentMaterial = Materials[MtlName];
+		}
+
+	} while (File);
+	GLfloat* VboData = new GLfloat[Faces.size() * 3 * 3];
+	GLfloat* ColorsData = new GLfloat[Faces.size() * 3 * 3];
+	GLfloat* NormalsData = new GLfloat[Faces.size() * 3 * 3];
+	int i = 0;
+	for (Face f : Faces)
+	{
+		for (int k = 0; k < 3; k++)
+		{
+			VboData[i * 3 * 3 + k * 3 + 0] = Vertexes[f.Vertexes[k].VertexIndex - 1].x;
+			VboData[i * 3 * 3 + k * 3 + 1] = Vertexes[f.Vertexes[k].VertexIndex - 1].y;
+			VboData[i * 3 * 3 + k * 3 + 2] = Vertexes[f.Vertexes[k].VertexIndex - 1].z;
+			ColorsData[i * 3 * 3 + k * 3 + 0] = f.Material->Diffuse.r;
+			ColorsData[i * 3 * 3 + k * 3 + 1] = f.Material->Diffuse.g;
+			ColorsData[i * 3 * 3 + k * 3 + 2] = f.Material->Diffuse.b;
+			NormalsData[i * 3 * 3 + k * 3 + 0] = Normales[f.Vertexes[k].NormalIndex - 1].x;
+			NormalsData[i * 3 * 3 + k * 3 + 1] = Normales[f.Vertexes[k].NormalIndex - 1].y;
+			NormalsData[i * 3 * 3 + k * 3 + 2] = Normales[f.Vertexes[k].NormalIndex - 1].z;
+		}
+		i++;
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, VboIndex);
+	glBufferData(GL_ARRAY_BUFFER, (sizeof(GLfloat)) * Faces.size() * 3 * 3, VboData, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, ColorsIndex);
+	glBufferData(GL_ARRAY_BUFFER, (sizeof(GLfloat)) * Faces.size() * 3 * 3, ColorsData, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, NormalsIndex);
+	glBufferData(GL_ARRAY_BUFFER, (sizeof(GLfloat)) * Faces.size() * 3 * 3, NormalsData, GL_STATIC_DRAW);
+	delete[] VboData;
+	delete[] ColorsData;
+	delete[] NormalsData;
+}
+void Model::Draw(double x, double y, double z, double angle)
+{
+	ModelsExemplarsList.push_back(new ModelExemplar(this, x, y, z, angle));
+}
+
+ModelExemplar::ModelExemplar(Model* model, double x, double y, double z, double angle):
+	model(model),
+	x(x),
+	y(y),
+	z(z),
+	angle(angle)
+{}
+void ModelExemplar::operator()()
+{
+	glPushMatrix();
+	glTranslated(x, y, z);
+	glRotated(angle, 0, 0, 1);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glBindBuffer(GL_ARRAY_BUFFER, model->ColorsIndex);
+	glColorPointer(3, GL_FLOAT, 0, NULL);
+	glBindBuffer(GL_ARRAY_BUFFER, model->NormalsIndex);
+	glNormalPointer(GL_FLOAT, 0, NULL);
+	glBindBuffer(GL_ARRAY_BUFFER, model->VboIndex);
+	glVertexPointer(3, GL_FLOAT, 0, NULL);
+	glDrawArrays(GL_TRIANGLES, 0, model->Faces.size() * 3);
+	glFlush();
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glPopMatrix();
+}
+
 void WindowThreadProc(LPCWSTR WindowCaption)
 {
 	WNDCLASSEX wc;
@@ -362,7 +554,7 @@ void WindowThreadProc(LPCWSTR WindowCaption)
 	wc.hInstance = ghInst;
 	RegisterClassEx(&wc);
 
-	RECT rect = {0, 0, 800, 600};
+	RECT rect = { 0, 0, 800, 600 };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
 	hWnd = CreateWindow(
@@ -418,12 +610,25 @@ void WindowThreadProc(LPCWSTR WindowCaption)
 	hdc = GetDC(hWnd);
 	wglMakeCurrent(hdc, hRC);
 
+	glewInit();
+
 	glClearColor(0, 0, 0, 0);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_NORMALIZE);
+	GLfloat AmbientColor[4] = { 0.1, 0.1, 0.1, 1 };
+	GLfloat DiffuseColor[4] = { 0.6, 0.6, 0.4, 1 };
+	//GLfloat Position[4] = { 0.6, 0, -0.8, 0 };
+	GLfloat Position[4] = { 0.1, 0.6, -0.8, 0 };
+	glLightfv(GL_LIGHT0, GL_AMBIENT, AmbientColor);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, DiffuseColor);
+	glLightfv(GL_LIGHT0, GL_POSITION, Position);
 
 	glDepthFunc(GL_LEQUAL);
 	glAlphaFunc(GL_GREATER, 0);
@@ -433,18 +638,12 @@ void WindowThreadProc(LPCWSTR WindowCaption)
 	glMatrixMode(GL_MODELVIEW);
 
 	DWORD TaskIndex = 0;
-	//AvSetMmThreadCharacteristics(L"Games", &TaskIndex);
-	//SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
 
 	ShowWindow(hWnd, gnCmdShow);
 	UpdateWindow(hWnd);
 
 	Cond.notify_one();
 	MSG msg;
-	/*base = glGenLists(256);
-	Font = CreateFont(0, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_TT_PRECIS,
-		CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FF_DONTCARE | DEFAULT_PITCH, L"Comic Sans MS");
-	wglUseFontOutlines(hdc, 0, 256, base, 0, 0, WGL_FONT_POLYGONS, gmf);*/
 
 	while (GetMessage(&msg, hWnd, NULL, NULL))
 	{
@@ -489,17 +688,53 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		EnterCriticalSection(&cs);
 		wglMakeCurrent(hdc, hRC);
+		glClearColor(0.5, 0.5, 0.8, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
 		glLoadIdentity();
 		glViewport(0, 0, MainCamera.Width, MainCamera.Height);
-		glOrtho(-MainCamera.Width / 2 * MainCamera.Scale, MainCamera.Width / 2 * MainCamera.Scale,
-			-MainCamera.Height / 2 * MainCamera.Scale, MainCamera.Height / 2 * MainCamera.Scale, 0, -100);
+		double n = 150;
+		double f = 1100;
+		double c = n / f;
+		glFrustum(-MainCamera.Width / 2 * MainCamera.Scale * c, MainCamera.Width / 2 * MainCamera.Scale* c,
+			-MainCamera.Height / 2 * MainCamera.Scale* c, MainCamera.Height / 2 * MainCamera.Scale* c, n, f);
 		SetCamera();
+		
+		glTranslatef(0, 0, -300);
+		
+		glRotatef(-75, 1, 0, 0);
+		glTranslatef(0, -100, 0);
 		glRotatef(MainCamera.angle, 0, 0, 1);
 		glTranslatef(-MainCamera.x, -MainCamera.y, 0);
+
+		glPushMatrix();
+		//glRotatef(-MainCamera.angle, 0, 0, 1);
+		//glRotatef(75, 1, 0, 0);
+		//GLfloat Position[4] = { dcos(-MainCamera.angle), 1, dsin(-MainCamera.angle), 0 };
+		GLfloat Position[4] = { 0.1, -1, 0, 0 };
+		//glLightfv(GL_LIGHT0, GL_POSITION, Position);
+		/*glBegin(GL_LINES);
+		glColor3f(1, 1, 1);
+		glVertex3f(Position[0] * 50, Position[1] * 50, Position[2] * 50);
+		glColor3f(1, 1, 0);
+		glVertex3f(-Position[0] * 50, -Position[1] * 50, -Position[2] * 50);
+		glEnd();*/
+		glPopMatrix();
+		glEnable(GL_CULL_FACE);
+		for (auto Primitive : ModelsExemplarsList)
+		{
+			(*Primitive)();
+			delete Primitive;
+		}
+		glDisable(GL_CULL_FACE);
+		ModelsExemplarsList.clear();
+		double z = 0;
 		for (auto layer : Layer::LayersList)
 		{
+			glTranslated(0, 0, z);
 			if (layer->IsInterface)
 			{
+				glDisable(GL_LIGHTING);
+				glDisable(GL_DEPTH_TEST);
 				glPushMatrix();
 				glLoadIdentity();
 				glViewport(0, 0, MainCamera.Width, MainCamera.Height);
@@ -507,17 +742,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			for (auto Primitive : layer->Content)
 			{
-				//Primitive->Draw();
 				(*Primitive)();
-				//delete Primitive;
 			}
 			if (layer->IsInterface)
 			{
 				glPopMatrix();
+				glEnable(GL_LIGHTING);
+				glEnable(GL_DEPTH_TEST);
 			}
+			for (auto Primitive : layer->Content) delete Primitive;
 			layer->Content.clear();
+			z += 0.001;
 		}
-
 		/*glPushAttrib(GL_LIST_BIT);
 		glListBase(base);
 		LPSTR text = "Quick brown fox jump over lazy dog";

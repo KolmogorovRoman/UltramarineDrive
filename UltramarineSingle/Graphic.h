@@ -1,11 +1,16 @@
 #pragma once
 #include <Windows.h>
-#include <GL/gl.h>
+#define GLEW_STATIC
+#include "OpenGL/glew.h"
 #include <GL/glu.h>
 #include <GL/glaux.h>
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <map>
 
 #include "Misc.h"
 #include "Management.h"
@@ -92,12 +97,10 @@ private:
 public:
 	GLuint TextureIndex;
 	POINT Center;
-	bool *Mask;
 	int Height, Width, RealWidth, RealHeight;
 	Image(string Name, string Maskname, int Centerx, int Centery);
 	Image(string Name);
 	void Draw(double x, double y, Layer* layer, double angle, double wScale = 1, double hScale = 1, bool OverScreen = 0);
-	~Image();
 };
 class AnimatedImage
 {
@@ -161,11 +164,68 @@ public:
 	virtual ~AnimatedGraphicUnit();
 };
 
+class Model
+{
+public:
+	GLuint VboIndex;
+	GLuint ColorsIndex;
+	GLuint NormalsIndex;
+	struct Vertex
+	{
+		double x, y, z;
+	};
+	struct TextureVertex
+	{
+		double u, v;
+	};
+	struct Normale
+	{
+		double x, y, z;
+	};
+	struct Material
+	{
+		struct Color
+		{
+			double r, g, b;
+		};
+		Color Ambient;
+		Color Diffuse;
+	};
+	struct Face
+	{
+		struct Vertex
+		{
+			int VertexIndex = 0;
+			int TextureIndex = 0;
+			int NormalIndex = 0;
+		};
+		Vertex Vertexes[3];
+		Material* Material;
+	};
+	vector<Vertex> Vertexes;
+	vector<TextureVertex> TextureVertexes;
+	vector<Normale> Normales;
+	vector<Face> Faces;
+	Model(string Path, string FileName);
+	void Draw(double x, double y, double z, double angle);
+};
+class ModelExemplar:
+	public Exemplar
+{
+public:
+	Model* model;
+	double x, y, z;
+	double angle;
+	ModelExemplar(Model* model, double x, double y, double z, double angle);
+	void operator()() override;
+};
+
 class Camera:
 	public PointUnit
 {
 public:
 	int Width = 800, Height = 600;
 	double Scale = 1;
+	double HeightAndge = 0;
 };
 extern Camera MainCamera;

@@ -1,104 +1,24 @@
 #pragma once
-#include <map>
-#include <string>
-#include <sstream>
+#include "Interpreter.h"
 #include "Management.h"
 #include "Graphic.h"
 #include "Font.h"
-#include "TupleRec.h"
 #include "Geometry.h"
 
-class BaseCommand;
-template<class... Args>
-struct Command;
-class Expression;
-template<class... Args>
-struct ConcreteExpression;
-class Console;
-
-
 template<class T>
-void Parse(Console* console, istream& String, T& t)
-{
-	String >> t;
-	if (String.fail())
-	{
-		if (String.eof())
-			throw "Too few arguments"s;
-		else
-			throw "Parse error"s;
-	}
-}
-template<class... Types>
-void ParseTuple(Console* console, istream& String, TupleRec<Types...>& Tuple)
-{
-	Parse(console, String, Tuple.Head);
-	ParseTuple(console, String, Tuple.Tail);
-}
-void ParseTuple(Console* console, istream& String, TupleRec<>& Tuple);
-
-class BaseCommand
-{
-public:
-	string Name;
-	BaseCommand(string Name);
-	//virtual string Parse(istream& String) = 0;
-	string Execute(Console* console, istream& Args);
-	virtual Expression* GetExpression(Console* console, istream& Args) = 0;
-};
-template<class... Args> class Command:
-	public BaseCommand
-{
-public:
-	function<string(Args...)> Action;
-	Command(string name, function<string(Args...)> Action);
-	Expression* GetExpression(Console* console, istream& Args) override;
-};
-template<class... Args>
-Command<Args...>::Command(string Name, function<string(Args...)> Action):
-	BaseCommand(Name), Action(Action)
-{}
-template<class... Args>
-Expression* Command<Args...>::GetExpression(Console* console, istream& args)
-{
-	ConcreteExpression<Args...>* expr = new ConcreteExpression<Args...>(this);
-	ParseTuple(console, args, expr->Arguments);
-	return (Expression*)expr;
-}
-
-struct Expression
-{
-	BaseCommand* basecommand;
-	virtual string Execute() = 0;
-	Expression(BaseCommand* command);
-};
-template<class... Args>
-struct ConcreteExpression:
-	Expression
-{
-	Command<Args...>* command;
-	TupleRec<Args...> Arguments;
-	string Execute() override;
-	ConcreteExpression(Command<Args...>* command);
-};
-template<class... Args>
-ConcreteExpression<Args...>::ConcreteExpression(Command<Args...>* command):
-	command(command),
-	Expression((BaseCommand*)command)
-{}
-template<class... Args>
-string ConcreteExpression<Args...>::Execute()
-{
-	CalculateTuple(Arguments);
-	return Arguments.Call(command->Action);
-}
-void Parse(Console* console, istream& String, Expression*& e);
+struct Arg;
+template<class T>
+struct Opt;
+class Console;
+class BlockCommand;
+class BlockExpression;
+struct PrevExpression;
 
 class Console:
+	public Interpreter,
 	public SteepProcedUnit,
 	public GraphicUnit
 {
-	map<string, BaseCommand*> Commands;
 	bool Active = false;
 	Font* font;
 	Layer* backlayer;
@@ -113,72 +33,66 @@ class Console:
 	BYTE PrevKey = VK_UP;
 	BYTE NextKey = VK_DOWN;
 public:
+	enum CommandType
+	{
+		WrapArgs,
+		NoWrapArgs,
+		Both
+	};
+	Expression* LastExpression;
+	string LastResult;
+	//map<string, string> Variables;
 	Console(Font* font, Layer* backlayer, Layer* layer, Controller& contr);
+	using Interpreter::RegisterCommand;
+	template<class... Args> void RegisterCommand(string Name, function<string(Args...)> Action, CommandType Type = Both);
+	template<class Res, class... Args> void RegisterCommand(string Name, function<Res(Args...)> Action, CommandType Type = Both);
+	template<class... Args> void RegisterCommand(string Name, function<void(Args...)> Action, CommandType Type = Both);
+	/*template<class... Args> void RegisterCommand(string Name, function<void(Args...)> Action);
+	template<class... Args> void RegisterCommand(string Name, function<bool(Args...)> Action);*/
+
+	Expression* GetExpression(istream& Input) override;
+	string Execute(istream& Input);
+	string Execute();
+	string Execute(string Input);
+
 	void UpdateInputRect();
-	void RegisterCommand(BaseCommand* command);
-	template<class... Args> void RegisterCommand(string Name, function<string(Args...)> Action);
-	template<class... Args> void RegisterCommand(string Name, function<void(Args...)> Action);
-	template<class... Args> void RegisterCommand(string Name, function<bool(Args...)> Action);
 	void DrawProc() override;
 	void Activate();
 	void Deactivate();
 	bool IsActive();
 	void AddChar(char Char);
-	string Execute();
-	string Execute(string Input);
-	string Execute(istream& Input);
-	Expression* GetExpression(istream& Input);
 	void SteepProc() override;
 	void SetMessage(string Message);
-	void ForMagic(function<void()>);
 };
-
-template<class... Args>
-void Console::RegisterCommand(string Name, function<string(Args...)> Action)
-{
-	if (Commands.find(Name) != Commands.end())
-	{
-		Message = "Command " + Name + " already exist";
-		return;
-	}
-	RegisterCommand((BaseCommand*)new Command<Args...>(Name, Action));
-}
-template<class... Args>
-void Console::RegisterCommand(string Name, function<void(Args...)> Action)
-{
-	function<string(Args...)> action = [&, Action](Args... args)
-	{
-		Action(args...);
-		return ""s;
-	};
-	RegisterCommand(Name, action);
-}
-template<class... Args>
-void Console::RegisterCommand(string Name, function<bool(Args...)> Action)
-{
-	function<string(Args...)> action = [&, Action](Args... args)->string
-	{
-		bool res = Action(args...);
-		if (res == true) return "true"s;
-		else return "false"s;
-	};
-	RegisterCommand(Name, action);
-}
-
-template<class T>
-void Calculate(T& t)
-{}
-template<class... Args>
-void CalculateTuple(TupleRec<Args...>& Tuple)
-{
-	Calculate(Tuple.Head);
-	Calculate(Tuple.Tail);
-}
-void CalculateTuple(TupleRec<>& Tuple);
-
 
 template<class T>
 struct Arg
+{
+	typedef Arg<T> Type;
+	T Value;
+	static T& GetValue(Type& arg);
+	Arg() {}
+};
+template<>
+struct Arg<Expression*>
+{
+	typedef Expression* Type;
+	static Expression*& GetValue(Type& arg);
+};
+template<>
+struct Arg<PrevExpression*>
+{
+	typedef PrevExpression* Type;
+	static PrevExpression*& GetValue(Type& arg);
+};
+
+template<class T>
+void Parse(Interpreter* Interpreter, istream& String, Arg<T>& t);
+template<>
+void Parse<string>(Interpreter* Interpreter, istream& String, Arg<string>& t);
+
+template<class T>
+struct Opt
 {
 	T Value;
 	bool IsValid = true;
@@ -191,33 +105,43 @@ struct Arg
 	T operator-> ();
 };
 template<class T>
-void Arg<T>::SetDefault(T& Value)
+void Opt<T>::SetDefault(T& Value)
 {
 	if (IsSkipped) this->Value = Value;
 }
 template<class T>
-void Arg<T>::SetDefault(T&& Value)
+void Opt<T>::SetDefault(T&& Value)
 {
 	if (IsSkipped) this->Value = Value;
 }
 template<class T>
-Arg<T>::operator T()
+Opt<T>::operator T()
 {
 	return Value;
 }
 template<class T>
-T& Arg<T>::operator* ()
+T& Opt<T>::operator* ()
 {
 	return Value;
 }
 template<class T>
-T Arg<T>::operator-> ()
+T Opt<T>::operator-> ()
 {
 	return Value;
 }
 template<class T>
-void Parse(Console* console, istream& String, Arg<T>& t)
+void Parse(Interpreter* console, istream& String, Opt<T>& t)
 {
+	/*
+	streampos pos = String.tellg();
+	string Input;
+	String >> Input;
+	if (Input == "{"s)
+	{
+		String.seekg(pos);
+		Expression* expr = console->GetExpression(String);
+
+	}*/
 	int State = String.rdstate();
 	Parse(console, String, t.Value);
 	if (String.fail())
@@ -235,16 +159,78 @@ void Parse(Console* console, istream& String, Arg<T>& t)
 	}
 	String.setstate(State);
 }
-template<>
-struct Arg<string>
-{
-	string Value;
-	operator string();
-	string& operator* ();
-};
 template<class T>
-void Calculate(Arg<T>& t)
+void Calculate(Opt<T>& t)
 {
 	if (t.IsValid)
 		Calculate(t.Value);
 }
+
+struct BlockExpression:
+	public Expression
+{
+	list<Expression*> Expressions;
+	Console* console;
+	BlockExpression(BaseCommand* command, Console* console);
+	string Execute() override;
+};
+struct BlockCommand:
+	public BaseCommand
+{
+	BlockCommand();
+	Expression* GetExpression(Interpreter* Interpreter, istream& Args) override;
+};
+
+struct StringExpression:
+	public Expression
+{
+	string String;
+	StringExpression(BaseCommand* command);
+	string Execute() override;
+};
+struct StringCommand:
+	public BaseCommand
+{
+	StringCommand();
+	Expression* GetExpression(Interpreter* Interpreter, istream& Args) override;
+};
+
+struct VariableExpression:
+	public Expression
+{
+	VariableExpression(BaseCommand* command);
+	string Execute() override;
+};
+struct Variable:
+	public BaseCommand
+{
+	string Name;
+	string Value;
+	Variable(string Name);
+	Expression* GetExpression(Interpreter* Interpreter, istream& Args) override;
+};
+
+struct PrevExpression
+{
+	Expression* expr;
+};
+//struct PrevResultCommand:
+//	public BaseCommand
+//{
+//	PrevResultCommand();
+//	Expression* GetExpression(Interpreter* Interpreter, istream& Args) override;
+//};
+void Parse(Interpreter* console, istream& String, PrevExpression*& res);
+
+bool Bool(string& s);
+int Int(string& s);
+template<class T>
+string String(T t);
+
+template<class T>
+string String(T t)
+{
+	return to_string(t);
+}
+
+#include "Console.hpp"

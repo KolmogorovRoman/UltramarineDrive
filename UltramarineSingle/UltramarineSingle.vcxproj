@@ -93,8 +93,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opengl32.lib;Glu32.lib;ws2_32.lib;glaux.lib;legacy_stdio_definitions.lib;avrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\�����\Documents\Visual Studio 2015\Projects\UltramarineDrive\UltramarineSingle\lib\Release\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;Glu32.lib;ws2_32.lib;glaux.lib;legacy_stdio_definitions.lib;avrt.lib;glew32s.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Роман\Documents\Visual Studio 2015\Projects\UltramarineDrive\UltramarineSingle\OpenGL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
@@ -152,12 +152,15 @@
   <ItemGroup>
     <ClInclude Include="Chat.h" />
     <ClInclude Include="Console.h" />
+    <ClInclude Include="Console.hpp" />
     <ClInclude Include="Drive.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Geometry.h" />
+    <ClInclude Include="glext.h" />
     <ClInclude Include="Graphic.h" />
     <ClInclude Include="Interpreter.h" />
+    <ClInclude Include="Interpreter.hpp" />
     <ClInclude Include="Management.h" />
     <ClInclude Include="Misc.h" />
     <ClInclude Include="Physic.h" />

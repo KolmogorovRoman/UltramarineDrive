@@ -1,7 +1,9 @@
-scale 1.5
-cammode 1
-newbot Alpha
-newbot Beta
-newbot Gamma
-newbot Delta
-newbot Epsilon
+{
+	scale 1.5
+	cammode 3
+	newbot " Alpha " 0
+	newbot " Beta " 0
+	newbot " Gamma " 0
+	newbot " Delta " 0
+	newbot " Epsilon " 0
+}

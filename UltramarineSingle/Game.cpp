@@ -24,6 +24,14 @@ Image* AtgmImage;
 AnimatedImage* AtgmTrackImage;
 Image* ApacheSightImage;
 
+Model* TankBodyModel;
+Model* TankTowerModel;
+Model* Map1Model;
+Model* BulletModel;
+Model* SightModel;
+Model* BoxModel;
+Model* FireModel;
+
 Layer* MapLayer;
 Layer* TanksBodyLayer;
 Layer* EffectsLayer;
@@ -40,7 +48,7 @@ Player* Player1;
 Player* WathedPlayer;
 
 int GameMode = 0;
-int CamMode = 0;
+int CamMode = 2;
 int DbgPointsMode = 0;
 int DbgClockMode = 0;
 int Time = 0;
@@ -71,7 +79,7 @@ bool PhysCollTable[4][4] =
 Bullet::Bullet(double x, double y, double angle, Player* ParPlayer):
 	PointUnit(x, y, angle),
 	SolidUnit(BulletMask, OT_BULLET),
-	GraphicUnit(BulletImage, TanksBodyLayer),
+	GraphicUnit(NULL, NULL),
 	ParPlayer(ParPlayer)
 {}
 void Bullet::SteepProc()
@@ -83,12 +91,16 @@ void Bullet::SteepProc()
 		y<-Map1->image->RealHeight / 2 || y>Map1->image->RealHeight / 2)
 		Delete();
 }
+void Bullet::DrawProc()
+{
+	BulletModel->Draw(x, y, 0, angle);
+}
 void Bullet::CollProc(SolidUnit* Other)
 {
 	if (ParPlayer == NULL || ParPlayer->tank != Other)
 	{
 		Delete();
-		(new AnimatedGraphicUnit(HitImage, EffectsLayer, false))->SetPoint(x, y, 180 + angle);
+		//(new AnimatedGraphicUnit(HitImage, EffectsLayer, false))->SetPoint(x, y, 180 + angle);
 	}
 }
 Bullet::~Bullet()
@@ -96,7 +108,8 @@ Bullet::~Bullet()
 
 Tank::Tank(PointUnit Point, Player* player, TankController* Contr, string NickName):
 	PointUnit(Point),
-	GraphicUnit(TankBodyImage, TanksBodyLayer),
+	//GraphicUnit(TankBodyImage, TanksBodyLayer),
+	GraphicUnit(NULL, NULL),
 	SolidPhysicUnit(TankMask, OT_TANK),
 	player(player),
 	Contr(Contr),
@@ -104,9 +117,11 @@ Tank::Tank(PointUnit Point, Player* player, TankController* Contr, string NickNa
 	HitPoints(5),
 	FireReady(100),
 	TowerAngle(0),
+	TargetAngle(angle),
 	TowerSpeed(0),
 	contmask(new ContMask(mask)),
-	Tower(new GraphicUnit(TankTowerImage, TanksTowerLayer))
+	//Tower(new GraphicUnit(TankTowerImage, TanksTowerLayer))
+	Tower(new GraphicUnit(NULL, NULL))
 {}
 void Tank::SteepProc()
 {
@@ -117,20 +132,37 @@ void Tank::SteepProc()
 	if (Contr->KeyFirePressed && FireReady >= 150)
 	{
 		new Bullet(x + dcos(angle + TowerAngle) * 60, y + dsin(angle + TowerAngle) * 60, angle + TowerAngle, player);
-		(new AnimatedGraphicUnit(FireImage, EffectsLayer, false))
-			->SetPoint(x + dcos(angle + TowerAngle) * 60, y + dsin(angle + TowerAngle) * 60, angle + TowerAngle);
+		//(new AnimatedGraphicUnit(FireImage, EffectsLayer, false))
+		//	->SetPoint(x + dcos(angle + TowerAngle) * 60, y + dsin(angle + TowerAngle) * 60, angle + TowerAngle);
 		FireReady = 0;
 	}
+	if (FireReady<5)
+		FireModel->Draw(x + dcos(angle + TowerAngle) * 60, y + dsin(angle + TowerAngle) * 60, 0, angle + TowerAngle);
 	if (Contr->KeyPlanePressed && player->PlaneReady == 1)
 	{
 		new Plane(Contr->Mouse.x, Contr->Mouse.y);
 		player->PlaneReady = false;
 	}
-	double TargetAngle;
-	TargetAngle = AngleToPoint(x, y, Contr->Mouse.x, Contr->Mouse.y);
-	if (AnglesDiff(TargetAngle, angle + TowerAngle) < -2) TowerAngle -= 2;
-	else if (AnglesDiff(TargetAngle, angle + TowerAngle) > 2) TowerAngle += 2;
-	else TowerAngle = TargetAngle - angle;
+
+	if (Contr->MouseControl)
+	{
+		TargetAngle = AngleToPoint(x, y, Contr->Mouse.x, Contr->Mouse.y);
+		if (AnglesDiff(TargetAngle, angle + TowerAngle) < -2) TowerAngle -= 2;
+		else if (AnglesDiff(TargetAngle, angle + TowerAngle) > 2) TowerAngle += 2;
+		else TowerAngle = TargetAngle - angle;
+	}
+	else if (Contr1.Keys[VK_TAB] == 0)
+	{
+		TargetAngle += -Contr->MouseSource.x * 250.0 / MainCamera.Width;
+		MainCamera.HeightAndge = -Contr->MouseSource.y* 250.0 / MainCamera.Width;
+		Contr->MouseSource.x = MainCamera.Width / 2;
+		Contr->MouseSource.y = MainCamera.Height / 2;
+		ClientToScreen(hWnd, &Contr->MouseSource);
+		SetCursorPos(Contr->MouseSource.x, Contr->MouseSource.y);
+		if (AnglesDiff(TargetAngle, angle + TowerAngle) < -2) TowerAngle -= 2;
+		else if (AnglesDiff(TargetAngle, angle + TowerAngle) > 2) TowerAngle += 2;
+		else TowerAngle = TargetAngle - angle;
+	}
 	/*if (AnglesDiff(TargetAngle, angle + TowerAngle) < -2.5*TowerSpeed*TowerSpeed && TowerSpeed > -2) TowerSpeed -= 0.2;
 	else if (AnglesDiff(TargetAngle, angle + TowerAngle) > 2.5*TowerSpeed*TowerSpeed && TowerSpeed < 2) TowerSpeed += 0.2;
 	else if (TowerSpeed >= 0.2) TowerSpeed -= 0.2;
@@ -214,11 +246,43 @@ void Tank::DrawProc()
 	Tower->y = y;
 	Tower->angle = angle + TowerAngle;
 	//NickName
-	MainFont->Draw(NickName, x, y + 50, LabelsLayer, true, true);
+	//MainFont->Draw(NickName, x, y + 50, LabelsLayer, true, true);
 	//HitPoints
-	DrawRect(x - 50, y - 50, x + 50, y - 45, 1, LabelsLayer, 1, 1, 1);
+	LabelsLayer->Add([x = x, y = y, HitPoints = HitPoints]() {
+		glPushMatrix();
+		//glDisable(GL_DEPTH_TEST);
+		glTranslatef(x, y, 0);
+		glRotatef(90, 1, 0, 0);
+		glRotatef(-MainCamera.angle, 0, 1, 0);
+		glTranslatef(0, 2.5, 50);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		glColor4f(1, 1, 1, 1);
+		glBegin(GL_POLYGON);
+		glVertex2d(-25, -2.5);
+		glVertex2d(-25, 2.5);
+		glVertex2d(25, 2.5);
+		glVertex2d(25, -2.5);
+		glEnd();
+		glColor4f(0, 0, 0, 1);
+		glBegin(GL_LINE_LOOP);
+		glVertex2d(-25, -2.5);
+		glVertex2d(-25, 2.5);
+		glVertex2d(25, 2.5);
+		glVertex2d(25, -2.5);
+		glEnd();
+		glColor4f(1 - HitPoints / 5.0, HitPoints / 5.0, 0, 1);
+		glBegin(GL_POLYGON);
+		glVertex2d(-25, -2.5);
+		glVertex2d(-25, 2.5);
+		glVertex2d(50 * HitPoints / 5 - 25, 2.5);
+		glVertex2d(50 * HitPoints / 5 - 25, -2.5);
+		glEnd();
+		//glEnable(GL_DEPTH_TEST);
+		glPopMatrix();
+	});
+	/*DrawRect(x - 50, y - 50, x + 50, y - 45, 1, LabelsLayer, 1, 1, 1);
 	DrawRect(x - 50, y - 50, x + 100 * HitPoints / 5 - 50, y - 45, 1, LabelsLayer, 1 - HitPoints / 5.0, HitPoints / 5.0, 0);
-	DrawRect(x - 50, y - 50, x + 50, y - 45, false, LabelsLayer);
+	DrawRect(x - 50, y - 50, x + 50, y - 45, false, LabelsLayer);*/
 
 	if (player == WathedPlayer)
 	{
@@ -231,7 +295,7 @@ void Tank::DrawProc()
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2 + 20, 100 * HitPoints / 5 - MainCamera.Width / 2, -MainCamera.Height / 2 + 10, true, InterfaceLayer, 1 - HitPoints / 5.0, HitPoints / 5.0, 0);
 		DrawRect(-MainCamera.Width / 2, -MainCamera.Height / 2 + 20, -MainCamera.Width / 2 + 100, -MainCamera.Height / 2 + 10, false, InterfaceLayer, 0, 0, 0);
 		//Cursor
-		DrawRect(Contr->Mouse.x - 20, Contr->Mouse.y - 20, Contr->Mouse.x + 15, Contr->Mouse.y - 15, true, LabelsLayer, 1, 1, 1);
+		/*DrawRect(Contr->Mouse.x - 20, Contr->Mouse.y - 20, Contr->Mouse.x + 15, Contr->Mouse.y - 15, true, LabelsLayer, 1, 1, 1);
 		DrawRect(Contr->Mouse.x + 20, Contr->Mouse.y - 20, Contr->Mouse.x + 15, Contr->Mouse.y + 15, true, LabelsLayer, 1, 1, 1);
 		DrawRect(Contr->Mouse.x + 20, Contr->Mouse.y + 20, Contr->Mouse.x - 15, Contr->Mouse.y + 15, true, LabelsLayer, 1, 1, 1);
 		DrawRect(Contr->Mouse.x - 20, Contr->Mouse.y + 20, Contr->Mouse.x - 15, Contr->Mouse.y - 15, true, LabelsLayer, 1, 1, 1);
@@ -250,37 +314,88 @@ void Tank::DrawProc()
 			DrawRect(Contr->Mouse.x + 20, Contr->Mouse.y + 20, Contr->Mouse.x + 20 - (FireReady - 75) * 20 / 75, Contr->Mouse.y + 15, true, LabelsLayer, 0.5, 0, 1);
 		}
 		DrawRect(Contr->Mouse.x - 20, Contr->Mouse.y - 20, Contr->Mouse.x + 20, Contr->Mouse.y + 20, false, LabelsLayer);
-		DrawRect(Contr->Mouse.x - 15, Contr->Mouse.y - 15, Contr->Mouse.x + 15, Contr->Mouse.y + 15, false, LabelsLayer);
+		DrawRect(Contr->Mouse.x - 15, Contr->Mouse.y - 15, Contr->Mouse.x + 15, Contr->Mouse.y + 15, false, LabelsLayer);*/
 		//Sight
-		double CurrLaserLen = sqrt(Map1->image->Width*Map1->image->Width + Map1->image->Height*Map1->image->Height);
+		double InitLen = sqrt(Map1->image->Width*Map1->image->Width + Map1->image->Height*Map1->image->Height);
 		double Sin = dsin(angle + TowerAngle);
 		double Cos = dcos(angle + TowerAngle);
-		Vector Laser{ x + CurrLaserLen*Cos, y + CurrLaserLen*Sin };
+		Vector Laser{ InitLen*Cos,InitLen*Sin };
 		ForEach(SolidUnit, Unit)
 		{
 			if ((BaseUnit*)Unit == (BaseUnit*)this) continue;
 			if (!CollTable[OT_BULLET][Unit->Type]) continue;
-			Vector CurrLaser = v(x, y);
-			for (int l = 0; l < CurrLaserLen; l++)
+			Vector CurrLaser = v(0, 0);
+			double LaserLen = Laser.Len();
+			for (int l = 0; l < LaserLen; l++)
 			{
-				if (Unit->PixelCheck(CurrLaser.x, CurrLaser.y))
+				if (Unit->PixelCheck(x + CurrLaser.x, y + CurrLaser.y))
 				{
 					Laser = CurrLaser;
-					CurrLaserLen = CurrLaser.Len();
 					break;
 				}
 				CurrLaser.x += Cos;
 				CurrLaser.y += Sin;
 			}
 		}
-		//DrawLine(x, y, Laser.x, Laser.y, 97, 1, 0, 0, 0.7);
-		SightImage->Draw(Laser.x, Laser.y, LabelsLayer, angle + TowerAngle);
+		Laser.x += x;
+		Laser.y += y;
+		//SightImage->Draw(Laser.x, Laser.y, LabelsLayer, angle + TowerAngle);
+		//SightModel->Draw(Laser.x, Laser.y, 0, angle + TowerAngle);
+		Layer* l = new Layer(false);
+		DrawRect(-10, -10, +8, -8, true, l, 1, 1, 1);
+		DrawRect(+10, -10, +8, +8, true, l, 1, 1, 1);
+		DrawRect(+10, +10, -8, +8, true, l, 1, 1, 1);
+		DrawRect(-10, +10, -8, -8, true, l, 1, 1, 1);
+		if (FireReady <= 75)
+		{
+			DrawRect(-10, -FireReady * 8 / 75, -8, +FireReady * 8 / 75, true, l, 0.5, 0, 1);
+			DrawRect(+10, -FireReady * 8 / 75, +8, +FireReady * 8 / 75, true, l, 0.5, 0, 1);
+		}
+		else
+		{
+			DrawRect(-10, -8, -8, +8, true, l, 0.5, 0, 1);
+			DrawRect(+10, -8, +8, +8, true, l, 0.5, 0, 1);
+			DrawRect(-10, -10, -10 + (FireReady - 75) * 10 / 75, -8, true, l, 0.5, 0, 1);
+			DrawRect(+10, -10, +10 - (FireReady - 75) * 10 / 75, -8, true, l, 0.5, 0, 1);
+			DrawRect(-10, +10, -10 + (FireReady - 75) * 10 / 75, +8, true, l, 0.5, 0, 1);
+			DrawRect(+10, +10, +10 - (FireReady - 75) * 10 / 75, +8, true, l, 0.5, 0, 1);
+		}
+		DrawRect(-10, -10, +10, +10, false, l);
+		DrawRect(-8, -8, +8, +8, false, l);
+		DrawRect(-1, -1, +1, +1, true, l, 1, 1, 0);
+		LabelsLayer->Add([l = l, FireReady = FireReady, Laser = Laser]() {
+			glPushMatrix();
+			glDisable(GL_DEPTH_TEST);
+			glTranslatef(Laser.x, Laser.y, 0);
+			glRotatef(90, 1, 0, 0);
+			glRotatef(-MainCamera.angle, 0, 1, 0);
+			glTranslatef(0, 18.78, 0);
+			for (auto p : l->Content)
+			{
+				(*p)();
+				delete p;
+			}
+			glEnable(GL_DEPTH_TEST);
+			glPopMatrix();
+			l->Content.clear();
+			delete l;
+		});
 		//Plane
 		if (player->PlaneReady)
 		{
-			PlaneImage->Draw(-MainCamera.Width / 2 + 50, -MainCamera.Height / 2 + 50, InterfaceLayer, 90, 0.5, 0.5, true);
+			//PlaneImage->Draw(-MainCamera.Width / 2 + 50, -MainCamera.Height / 2 + 50, InterfaceLayer, 90, 0.5, 0.5, true);
 		}
 	}
+
+	//glPushMatrix();
+	TankBodyModel->Draw(x, y, 0, angle);
+	TankTowerModel->Draw(x, y, 0, angle + TowerAngle);
+	/*glTranslated(x, y, 0);
+	glRotated(angle, 0, 0, 1);
+	(*TankBodyModel)();
+	glRotated(TowerAngle, 0, 0, 1);
+	(*TankTowerModel)();
+	glPopMatrix();*/
 }
 void Tank::Die()
 {
@@ -297,11 +412,13 @@ Tank::~Tank()
 	delete contmask;
 	Tower->Delete();
 }
-void Parse(Console* console, istream & stream, Tank*& tank)
+void Parse(Interpreter* Interpreter, istream & stream, Tank*& tank)
 {
-	string* NickName = new string();
-	stream >> *NickName;
-	tank = (Tank*)NickName;
+	Arg<string> NickName;
+	//string* NickName = new string();
+	//stream >> *NickName;
+	Parse(Interpreter, stream, NickName);
+	tank = (Tank*)&NickName.Value;
 }
 void Calculate(Tank*& tank)
 {
@@ -380,6 +497,10 @@ Map::Map(string MapDir):
 		}*/
 		GameConsole->Execute(Script);
 	}
+}
+void Map::DrawProc()
+{
+	Map1Model->Draw(0, 0, 0, 0);
 }
 
 Player::Player(string NickName, TankController* Contr):
@@ -590,6 +711,10 @@ void Box::CollProc(SolidUnit* Other)
 		Delete();
 	}
 }
+void Box::DrawProc()
+{
+	BoxModel->Draw(x, y, 0, angle);
+}
 
 Plane::Plane(int x, int y):
 	GraphicUnit(PlaneImage, SkyLayer),
@@ -631,12 +756,15 @@ void Explosive::SteepProc()
 TankController::TankController():
 	Contr(NULL)
 {}
-TankController::TankController(Controller* Contr, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyFireCode, int KeyPlaneCode) :
+TankController::TankController(Controller* Contr, bool MouseControl, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyTowerRightCode, int KeyTowerLeftCode, int KeyFireCode, int KeyPlaneCode) :
 	Contr(Contr),
+	MouseControl(MouseControl),
 	KeyForwardCode(KeyForwardCode),
 	KeyBackCode(KeyBackCode),
 	KeyRightCode(KeyRightCode),
 	KeyLeftCode(KeyLeftCode),
+	KeyTowerRightCode(KeyTowerRightCode),
+	KeyTowerLeftCode(KeyTowerLeftCode),
 	KeyFireCode(KeyFireCode),
 	KeyPlaneCode(KeyPlaneCode)
 {}
@@ -647,9 +775,12 @@ void TankController::Check()
 	KeyBackPressed = Contr->Keys[KeyBackCode] > 0;
 	KeyRightPressed = Contr->Keys[KeyRightCode] > 0;
 	KeyLeftPressed = Contr->Keys[KeyLeftCode] > 0;
+	KeyTowerRightPressed = Contr->Keys[KeyTowerRightCode] > 0;
+	KeyTowerLeftPressed = Contr->Keys[KeyTowerLeftCode] > 0;
 	KeyFirePressed = Contr->Keys[KeyFireCode] > 0;
 	KeyPlanePressed = Contr->Keys[KeyPlaneCode] > 0;
 	Mouse = Contr->Mouse;
+	MouseSource = Contr->MouseSource;
 }
 
 Apache::Apache(PointUnit Point, Controller* Contr):
@@ -895,13 +1026,13 @@ void Draw()
 		{
 			DrawRect(-150, -200, 150, 200, true, InterfaceBackLayer, 0.75, 0.75, 0.75, 0.5);
 			DrawRect(-150, -200, 150, 200, false, InterfaceLayer);
-			MainFont->Draw("NickName", -150, 171, InterfaceLayer);
+			MainFont->Draw("NickName", -150, 200, InterfaceLayer);
 			DrawLine(-10, -200, -10, 200, InterfaceLayer);
-			MainFont->Draw("Wins", -10, 171, InterfaceLayer);
+			MainFont->Draw("Wins", -10, 200, InterfaceLayer);
 			DrawLine(40, -200, 40, 200, InterfaceLayer);
-			MainFont->Draw("Kills", 40, 171, InterfaceLayer);
+			MainFont->Draw("Kills", 40, 200, InterfaceLayer);
 			DrawLine(90, -200, 90, 200, InterfaceLayer);
-			MainFont->Draw("Deaths", 90, 171, InterfaceLayer);
+			MainFont->Draw("Deaths", 90, 200, InterfaceLayer);
 			int y = 200 - MainFont->Common.LineHeight;
 			DrawLine(-150, y, 150, y, InterfaceLayer);
 			ForEach(Player, player)
@@ -946,102 +1077,58 @@ void Draw()
 	}
 }
 
-struct BlockExpression:
-	public Expression
-{
-	BlockExpression(BaseCommand* command):
-		Expression(command)
-	{}
-	list<Expression*> Expressions;
-	string Execute() override;
-};
-
-string BlockExpression::Execute()
-{
-	for (Expression* expr : Expressions)
-	{
-		expr->Execute();
-	}
-	return ""s;
-}
-
-struct BlockCommand:
-	public BaseCommand
-{
-	BlockCommand():
-		BaseCommand("begin")
-	{}
-	Expression* GetExpression(Console* console, istream& Args) override;
-};
-
-Expression* BlockCommand::GetExpression(Console* console, istream& s)
-{
-	BlockExpression* expr = new BlockExpression(this);
-	while (s)
-	{
-		Expression* e = console->GetExpression(s);
-		if (e->basecommand->Name == "end") break;
-		expr->Expressions.push_back(e);
-	}
-	return expr;
-}
-
 void InitConsole()
 {
-	BeginCommands()
-	{
-		GameConsole->RegisterCommand(new BlockCommand());
-	}
-	AddCommand(void, "heal", Arg<Tank*> tank)
+	GameConsole->RegisterCommand("heal", Proc(void, Opt<Tank*> tank)
 	{
 		tank.SetDefault(Player1->tank);
 		tank->HitPoints = 5;
-	}
-	AddCommand(void, "kill", Arg<Tank*> tank)
+	});
+	GameConsole->RegisterCommand("kill", Proc(void, Opt<Tank*> tank)
 	{
 		if (*tank != NULL) tank->Die();
-	}
-	AddCommand(void, "wath", Arg<Player*> player)
+	});
+	GameConsole->RegisterCommand("wath", Proc(void, Opt<Player*> player)
 	{
 		player.SetDefault(Player1);
 		WathedPlayer = *player;
-	}
-	AddCommand(void, "plane", Arg<Player*> player)
+	});
+	GameConsole->RegisterCommand("plane", Proc(void, Opt<Player*> player)
 	{
 		player.SetDefault(Player1);
 		(*player)->PlaneReady = true;
-	}
-	AddCommand(void, "mode", int mode)
+	});
+	GameConsole->RegisterCommand("mode", Proc(void, int mode)
 	{
 		if (mode == 0 || mode == 1)
 			GameMode = mode;
 		else throw "Mode "s + to_string(mode) + " is not exist"s;
-	}
-	AddCommand(void, "cammode", int mode)
+	});
+	GameConsole->RegisterCommand("cammode", Proc(void, int mode)
 	{
 		if (mode == 0)
 		{
 			CamMode = 0;
 			MainCamera.SetPoint(0, 0, 0);
 		}
-		else if (mode == 1 || mode == 2)
+		else if (mode == 1 || mode == 2 || mode == 3)
 		{
 			CamMode = mode;
 		}
 		else throw "Cammode "s + to_string(mode) + " is not exist"s;
-	}
-	AddCommand(void, "scale", double scale)
+	});
+	GameConsole->RegisterCommand("scale", Proc(void, double scale)
 	{
 		MainCamera.Scale = scale;
-	}
-	AddCommand(void, "fullscreen", bool fulscreen)
+	});
+	GameConsole->RegisterCommand("fullscreen", Proc(void, bool fulscreen)
 	{
 		if (fulscreen)
 			NeedFullscreen = true;
 		else
 			NeedWindowed = true;
-	}
-	AddCommand(void, "map", string map)
+	});
+	GameConsole->RegisterCommand("map", Proc(void, string map)
 	{
 		if (access(("Resources\\" + map).c_str(), 0) != 0)
 			throw "Directry Resources\\" + map + " not found";
@@ -1062,79 +1149,52 @@ void InitConsole()
 		Map1 = new Map(map);
 		Player1 = new Player("Player", Player1->Contr);
 		WathedPlayer = Player1;
-	}
-	AddCommand(void, "newbot", string Name, Arg<int> Team)
+	});
+	GameConsole->RegisterCommand("newbot", Proc(void, string Name, Opt<int> Team)
 	{
 		Team.SetDefault(0);
 		(new Bot(Name))->Team = *Team;
-	}
-	AddCommand(void, "kick", Player* player)
+	});
+	GameConsole->RegisterCommand("newbotexpr", Proc(void, Expression* NameExpr, Expression* TeamExpr)
+	{
+		string Name = NameExpr->Execute();
+		int Team = Int(TeamExpr->Execute());
+		(new Bot(Name))->Team = Team;
+	});
+	GameConsole->RegisterCommand("kick", Proc(void, Player* player)
 	{
 		if (player->tank != NULL)
 			player->tank->Delete();
 		player->Delete();
-	}
-	AddCommand(void, "exit")
+	});
+	GameConsole->RegisterCommand("exit", Proc(void)
 	{
 		Closed = true;
-	}
-	AddCommand(void, "dbgpoints", int mode)
+	});
+	GameConsole->RegisterCommand("dbgpoints", Proc(void, int mode)
 	{
 		if (mode >= 0 && mode <= 2)
 			DbgPointsMode = mode;
 		else throw "DbgPointsMode " + to_string(mode) + " is not exist";
-	}
-	AddCommand(void, "dbgclock", int mode)
+	});
+	GameConsole->RegisterCommand("dbgclock", Proc(void, int mode)
 	{
 		if (mode >= 0 && mode <= 2)
 			DbgClockMode = mode;
 		else throw "DbgClockMode " + to_string(mode) + " is not exist";
-	}
-	AddCommand(void, "apache")
+	});
+	GameConsole->RegisterCommand("apache", Proc(void)
 	{
 		new Apache(PointUnit(0, 0, 0), &Contr1);
-	}
-	AddCommand(void, "loadimages")
+	});
+	GameConsole->RegisterCommand("loadimages", Proc(void)
 	{
 		LoadImages();
-	}
-	AddCommand(bool, "o", int i)
+	});
+	GameConsole->RegisterCommand("o", Proc(bool, int i)
 	{
 		return i % 2 == 1;
-	}
-	AddCommand(void, "if", Expression* cond, Expression* expr)
-	{
-		if (cond->Execute() == "true"s) expr->Execute();
-	}
-	AddCommand(void, "for", int n, Expression* expr)
-	{
-		for (int i = 0; i < n; i++)
-			expr->Execute();
-	}
-	/*AddCommand(void, "begin", stringstream* s)
-	{
-		list<Expression*> Expressions;
-		while (*s)
-		{
-			Expression* expr = GameConsole->GetExpression(*s);
-			if (expr->basecommand->Name == "end") break;
-			Expressions.push_back(expr);
-		}
-		for (Expression* e : Expressions)
-		{
-			e->Execute();
-		}
-	}*/
-	AddCommand(void, "end")
-	{}
-	AddCommand(void, "alias", string name, Expression* expr)
-	{
-		GameConsole->RegisterCommand(name, (function<string()>)[&, expr]()->string
-		{
-			return expr->Execute();
-		});
-	}
-	EndCommands()
+	});
 }
 void InitLayers()
 {
@@ -1173,6 +1233,14 @@ void LoadImages()
 	Image* AtgmTrack3Image = new Image("Resources\\Apache\\ATGM\\Track3.bmp");
 	AtgmTrackImage = new AnimatedImage(3, AtgmTrack1Image, 1, AtgmTrack2Image, 4, AtgmTrack3Image, 5);
 	ApacheSightImage = new Image("Resources\\Apache\\Sight\\.bmp");
+
+	TankBodyModel = new Model("Resources\\Tank\\Body\\"s, "TankBody.obj"s);
+	TankTowerModel = new Model("Resources\\Tank\\Tower\\"s, "TankTower.obj"s);
+	Map1Model = new Model("Resources\\Map1\\"s, "Map1.obj"s);
+	BulletModel = new Model("Resources\\Bullet\\"s, "Bullet.obj"s);
+	SightModel = new Model("Resources\\Tank\\Sight\\"s, "Sight.obj"s);
+	BoxModel = new Model("Resources\\Heal\\"s, "Box.obj"s); 
+	FireModel = new Model("Resources\\Fire\\"s, "Fire.obj"s);
 }
 void LoadMasks()
 {
@@ -1189,7 +1257,7 @@ void GameInit()
 
 	Map1 = new Map("Map1");
 
-	Player1 = new Player("Player", new TankController(&Contr1, 'W', 'S', 'D', 'A', 1, 2));
+	Player1 = new Player("Player", new TankController(&Contr1, false, 'W', 'S', 'D', 'A', VK_RIGHT, VK_LEFT, 1, 2));
 	Player1->Spawn();
 
 	WathedPlayer = Player1;
@@ -1223,6 +1291,8 @@ void SetCamera()
 		MainCamera.SetPoint((WathedPlayer->tank->x * 2 + Contr1.Mouse.x) / 3, (WathedPlayer->tank->y * 2 + Contr1.Mouse.y) / 3, 0);
 	if (CamMode == 2)
 		MainCamera.SetPoint((WathedPlayer->tank->x * 2 + Contr1.Mouse.x) / 3, (WathedPlayer->tank->y * 2 + Contr1.Mouse.y) / 3, -WathedPlayer->tank->angle + 90);
+	if (CamMode == 3)
+		MainCamera.SetPoint(WathedPlayer->tank->x, WathedPlayer->tank->y, -(WathedPlayer->tank->TargetAngle) + 90);
 }
 void CameraChanged()
 {

@@ -74,6 +74,7 @@ class Controller
 public:
 	BYTE Keys[256];
 	POINT Mouse;
+	POINT MouseSource;
 	Controller();
 	void operator =(Controller* OtherController);
 };

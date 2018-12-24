@@ -32,7 +32,8 @@ public:
 	Player* ParPlayer;
 	Bullet(double x, double y, double angle, Player* ParPlayer);
 	void SteepProc();
-	void CollProc(SolidUnit* Other);
+	void DrawProc() override;
+	void CollProc(SolidUnit* Other) override;
 	~Bullet();
 };
 class Tank:
@@ -50,6 +51,7 @@ public:
 	int FireReady;
 	string NickName;
 	int NickLen;
+	double TargetAngle=0;
 	double TowerAngle;
 	double TowerSpeed;
 	Tank(PointUnit Point, Player* player, TankController* Contr, string NickName);
@@ -68,6 +70,7 @@ class Map:
 {
 public:
 	Map(string ResourcesDir);
+	void DrawProc() override;
 
 	struct Point:
 		public PointUnit
@@ -132,6 +135,7 @@ class Box:
 public:
 	Box(int x, int y);
 	void CollProc(SolidUnit* Other) override;
+	void DrawProc() override;
 };
 class Plane:
 	public GraphicUnit,
@@ -159,19 +163,25 @@ class TankController
 	int KeyBackCode;
 	int KeyRightCode;
 	int KeyLeftCode;
+	int KeyTowerRightCode;
+	int KeyTowerLeftCode;
 	int KeyFireCode;
 	int KeyPlaneCode;
 	Controller* Contr;
 public:
+	bool MouseControl = true;
 	bool KeyForwardPressed;
 	bool KeyBackPressed;
 	bool KeyRightPressed;
 	bool KeyLeftPressed;
+	bool KeyTowerRightPressed;
+	bool KeyTowerLeftPressed;
 	bool KeyFirePressed;
 	bool KeyPlanePressed;
 	POINT Mouse;
+	POINT MouseSource;
 	TankController();
-	TankController(Controller* Contr, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyFireCode, int KeyPlaneCode);
+	TankController(Controller* Contr, bool MouseControl, int KeyForwardCode, int KeyBackCode, int KeyRightCode, int KeyLeftCode, int KeyTowerRightCode, int KeyTowerLeftCode, int KeyFireCode, int KeyPlaneCode);
 	void Check();
 };
 class Apache:

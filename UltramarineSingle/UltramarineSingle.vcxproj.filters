@@ -87,6 +87,15 @@
     <ClInclude Include="Interpreter.h">
       <Filter>Modules\Console</Filter>
     </ClInclude>
+    <ClInclude Include="Interpreter.hpp">
+      <Filter>Modules\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="glext.h">
+      <Filter>Modules\Graphic</Filter>
+    </ClInclude>
+    <ClInclude Include="Console.hpp">
+      <Filter>Modules\Console</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Physic.cpp">

@@ -12,12 +12,12 @@ Console* GameConsole = NULL;
 
 void Control()
 {
-	GetCursorPos(&(Contr1.Mouse));
-	ScreenToClient(hWnd, (&Contr1.Mouse));
-	Contr1.Mouse.y = MainCamera.Height - Contr1.Mouse.y;
-	Contr1.Mouse.x -= MainCamera.Width / 2;
-	Contr1.Mouse.y -= MainCamera.Height / 2;
-	Vector tv = TurnV(v(Contr1.Mouse.x, Contr1.Mouse.y)*MainCamera.Scale, -MainCamera.angle);
+	GetCursorPos(&(Contr1.MouseSource));
+	ScreenToClient(hWnd, (&Contr1.MouseSource));
+	Contr1.MouseSource.y = MainCamera.Height - Contr1.Mouse.y;
+	Contr1.MouseSource.x -= MainCamera.Width / 2;
+	Contr1.MouseSource.y -= MainCamera.Height / 2;
+	Vector tv = TurnV(v(Contr1.MouseSource.x, Contr1.MouseSource.y)*MainCamera.Scale, -MainCamera.angle);
 	Contr1.Mouse.x = tv.x;
 	Contr1.Mouse.y = tv.y;
 	Contr1.Mouse.x += MainCamera.x;
@@ -51,6 +51,7 @@ int WINAPI WinMain(HINSTANCE hinst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	InitLayers();
 	LoadImages();
 	LoadMasks();
+	GameConsole = new Console(MainFont, InterfaceBackLayer, InterfaceLayer, Contr1);
 	GameInit();
 	EndDraw();
 	while (true)

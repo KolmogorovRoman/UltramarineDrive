@@ -1,3 +1,4 @@
+#pragma once
 #include <functional>
 using namespace std;
 
@@ -26,9 +27,9 @@ struct TupleRec<H, T...>
 	TupleRec<T...> Tail;
 	TupleRec()
 	{}
-	template<class Arg, class... Args>
-	TupleRec(Arg arg, Args... args):
-		Head(arg),
+	template<class Opt, class... Args>
+	TupleRec(Opt Opt, Args... args):
+		Head(Opt),
 		Tail(args...)
 	{}
 	template<class fRes, class... fArgs>
